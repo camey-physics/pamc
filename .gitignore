@@ -1,0 +1,20 @@
+# Ignore the build directory
+build/
+
+# Ignore the obj and bin directories as well
+obj/
+bin/
+.vscode/
+
+# Object files
+*.o
+*.obj
+
+# Executables
+*.exe
+*.out
+
+# Other common build artifacts
+*.so
+*.dll
+*.dylib
