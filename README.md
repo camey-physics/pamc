@@ -1,6 +1,6 @@
-# Population Annealing Monte Carlo (PAMC)
+# Population Annealing Monte Carlo (pamc)
 
-Population Annealing Monte Carlo (PAMC) is a flexible and scalable Monte Carlo algorithm for simulating equilibrium and nonequilibrium statistical physics systems in the canonical ensemble. This implementation is designed to be flexible and parallel, supporting OpenMP parallelization, with planned extensions for MPI and GPU acceleration.
+Population Annealing Monte Carlo (pamc) is a flexible and scalable Monte Carlo algorithm for simulating equilibrium and nonequilibrium statistical physics systems in the canonical ensemble. This implementation is designed to be flexible and parallel, supporting OpenMP parallelization, with planned extensions for MPI and GPU acceleration.
 
 ## Features
 - **Canonical ensemble simulation**  
