@@ -1,10 +1,15 @@
+#ifndef TESTMODEL_HPP
+#define TESTMODEL_HPP
+
+
 #include "models/Model.hpp"
 
 class TestModel : public Model {
     public:
         explicit TestModel(double state);
-        ~TestModel();
+        // ~TestModel();
         void initializeState() override;
+        void initializeState(double state);
         void copyStateFrom(const Model& other) override;
         enum class UpdateMethod { };
         double calcEnergy() const override;
@@ -15,3 +20,5 @@ class TestModel : public Model {
     private:
         double state_;
     };
+
+    #endif // TESTMODEL_HPP
