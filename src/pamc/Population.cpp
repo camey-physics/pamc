@@ -9,7 +9,7 @@ Population<ModelType>::Population(int numModels, int modelSize) {
     population_.reserve(numModels); // Preallocate memory for models
     for (int i = 0; i < numModels; ++i) {
         ModelType model;
-        model.initialize(modelSize); // Initialize each model with size
+        model.initializeState(modelSize); // Initialize each model with size
         population_.push_back(std::move(model)); // Move model into the vector
     }
 }
@@ -23,7 +23,7 @@ template <typename ModelType>
 void Population<ModelType>::update() {
     // Sweep over the entire population and update each model
     for (auto& model : population_) {
-        model.updateSweep();  // Update each individual model
+        model.updateSweep(1);  // Update each individual model
     }
 }
 
@@ -32,7 +32,7 @@ double Population<ModelType>::measureEnergy() {
     // Calculate the average energy of the population
     double totalEnergy = 0.0;
     for (auto& model : population_) {
-        totalEnergy += model.computeEnergy();
+        totalEnergy += model.calcEnergy();
     }
     return totalEnergy / population_.size();
 }

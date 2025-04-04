@@ -6,6 +6,7 @@
 
 class TestModel : public Model {
     public:
+        TestModel() = default;
         explicit TestModel(double state);
         // ~TestModel();
         void initializeState() override;

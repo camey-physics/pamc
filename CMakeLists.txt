@@ -1,17 +1,21 @@
 cmake_minimum_required(VERSION 3.10)
-project(pamc-Project VERSION 1.0 LANGUAGES CXX)
+project(pamc VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Enable testing
+enable_testing()
+include(GoogleTest)
 
 # Find required libraries
 find_package(GSL REQUIRED)
 find_package(GTest REQUIRED)
 
 # Define paths
-set(SRC_DIR src)
-set(INCLUDE_DIR include)
-set(TEST_DIR tests)
+set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
+set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
+set(TEST_DIR ${CMAKE_SOURCE_DIR}/tests)
 
 # Compiler optimizations for g++ and Clang
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -19,16 +23,21 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 # Collect source files automatically
-file(GLOB_RECURSE pamc_SOURCES "${SRC_DIR}/*.cpp")
+file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/*.cpp")
+
+# Collect all include directories recursively
+file(GLOB_RECURSE HEADER_DIRS LIST_DIRECTORIES true ${INCLUDE_DIR}/*)
+set(INCLUDE_DIRS ${INCLUDE_DIR})
+foreach(dir ${HEADER_DIRS})
+    if(IS_DIRECTORY ${dir})
+        list(APPEND INCLUDE_DIRS ${dir})
+    endif()
+endforeach()
 
 # Define the main library
-add_library(pamc ${pamc_SOURCES})
-target_include_directories(pamc PUBLIC ${INCLUDE_DIR})
+add_library(pamc ${SRC_FILES})
+target_include_directories(pamc PUBLIC ${INCLUDE_DIRS})
 target_compile_options(pamc PRIVATE $<$<CONFIG:Release>:-O3 -march=native -DNDEBUG>)
-
-# Enable testing
-enable_testing()
-include(GoogleTest)
 
 # Define the test executable
 file(GLOB_RECURSE TEST_SOURCES "${TEST_DIR}/*.cpp")
