@@ -72,6 +72,8 @@ TEST_F(IsingModelTest, MetropolisSweep) {
     IsingModel model(L10, smallBeta, J, seed);
     double avg_energy = 0.0, avg_mag = 0.0;
 
+    model.updateSweep(1000, IsingModel::UpdateMethod::metropolis, true);
+
     for (int i = 0; i < numSamples; ++i) {
         model.updateSweep(100, IsingModel::UpdateMethod::metropolis, true);
         avg_energy += model.calcEnergy();
@@ -81,7 +83,7 @@ TEST_F(IsingModelTest, MetropolisSweep) {
     avg_energy /= numSamples;
     avg_mag /= numSamples;
 
-    EXPECT_NEAR(avg_energy, -1.5 * tanh(3 * smallBeta), 5e-2);
+    EXPECT_NEAR(avg_energy, -3 *J *tanh(smallBeta *J), 5e-2);
     EXPECT_NEAR(avg_mag, 0.0, 5e-2);
 }
 
@@ -91,7 +93,10 @@ TEST_F(IsingModelTest, HeatBathSweep) {
     double smallBeta = 0.1;
 
     IsingModel model(L10, smallBeta, J, seed);
+    model.initializeAllUp();
     double avg_energy = 0.0, avg_mag = 0.0;
+
+    model.updateSweep(1000, IsingModel::UpdateMethod::heatBath, true);
 
     for (int i = 0; i < numSamples; ++i) {
         model.updateSweep(100, IsingModel::UpdateMethod::heatBath, true);
@@ -102,8 +107,32 @@ TEST_F(IsingModelTest, HeatBathSweep) {
     avg_energy /= numSamples;
     avg_mag /= numSamples;
 
-    EXPECT_NEAR(avg_energy, -1.5 * tanh(3 * smallBeta), 5e-2);
+    EXPECT_NEAR(avg_energy, -3 *J *tanh(smallBeta *J), 5e-2);
     EXPECT_NEAR(avg_mag, 0.0, 5e-2);
+}
+
+TEST_F(IsingModelTest, LowTempWolff) {
+    int L10 = 10;
+    int numSamples = 100;
+    double smallBeta = 10;
+
+    IsingModel model(L10, smallBeta, J, seed);
+    model.initializeAllUp();
+    double avg_energy = 0.0, avg_mag = 0.0;
+
+    model.updateSweep(20, IsingModel::UpdateMethod::wolff);
+
+    for (int i = 0; i < numSamples; ++i) {
+        model.updateSweep(10, IsingModel::UpdateMethod::wolff);
+        avg_energy += model.calcEnergy();
+        avg_mag += model.calcMagnetization();
+    }
+
+    avg_energy /= numSamples;
+    avg_mag /= numSamples;
+
+    EXPECT_NEAR(avg_energy, -3, 5e-2);
+    EXPECT_NEAR(abs(avg_mag), 1.0, 5e-2);
 }
 
 TEST_F(IsingModelTest, CopyState) {

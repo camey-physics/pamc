@@ -188,7 +188,7 @@ void IsingModel::updateSweep(int numSweeps, UpdateMethod method, bool sequential
             if (sequential) {
                 throw std::invalid_argument("Wolff update cannot be used with sequential mode!");
             }
-            // Wolff method handled separately below
+            // Wolff method handled separately below due to randomness in number of flipped spins
             for (int sweep = 0; sweep < numSweeps; ++sweep) {
                 int numFlipped = 0;
                 while (numFlipped < L_ * L_ * L_) {
@@ -200,7 +200,7 @@ void IsingModel::updateSweep(int numSweeps, UpdateMethod method, bool sequential
             throw std::invalid_argument("Unknown update method!");
     }
 
-    // For Metropolis and HeatBath, use the chosen update function pointer
+    // For Metropolis and HeatBath, use the chosen update function pointer and flip spins individually
     if (sequential) {
         for (int sweep = 0; sweep < numSweeps; ++sweep) {
             for (int ind = 0; ind < L_ *L_ *L_; ++ind) {
