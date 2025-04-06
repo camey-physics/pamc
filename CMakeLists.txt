@@ -40,9 +40,24 @@ target_include_directories(pamc PUBLIC ${INCLUDE_DIRS})
 target_compile_options(pamc PRIVATE $<$<CONFIG:Release>:-O3 -march=native -DNDEBUG>)
 
 # Define the test executable
-file(GLOB_RECURSE TEST_SOURCES "${TEST_DIR}/*.cpp")
-add_executable(pamcTest ${TEST_SOURCES})
-target_link_libraries(pamcTest PRIVATE pamc GTest::GTest GTest::Main GSL::gsl GSL::gslcblas)
+# file(GLOB_RECURSE TEST_SOURCES "${TEST_DIR}/*.cpp")
+# add_executable(pamcTest ${TEST_SOURCES})
+# target_link_libraries(pamcTest PRIVATE pamc GTest::GTest GTest::Main GSL::gsl GSL::gslcblas)
+
+# Test: TestModel
+add_executable(TestModelTest tests/models/TestModelTest.cpp)
+target_link_libraries(TestModelTest PRIVATE pamc GTest::GTest GTest::Main)
+gtest_discover_tests(TestModelTest)
+
+# Test: IsingModel
+add_executable(IsingModelTest tests/models/IsingModelTest.cpp)
+target_link_libraries(IsingModelTest PRIVATE pamc GSL::gsl GSL::gslcblas GTest::GTest GTest::Main)
+gtest_discover_tests(IsingModelTest)
+
+# Test: Population
+add_executable(PopulationTest tests/pamc/PopulationTest.cpp)
+target_link_libraries(PopulationTest PRIVATE pamc GTest::GTest GTest::Main)
+gtest_discover_tests(PopulationTest)
 
 # Discover and register tests
-gtest_discover_tests(pamcTest)
+# gtest_discover_tests(pamcTest)

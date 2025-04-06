@@ -1,3 +1,6 @@
+# Temporarily ignore
+SpinModel.hpp
+
 # Ignore the build directory
 build/
 
