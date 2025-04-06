@@ -49,22 +49,22 @@ void IsingModel::copyStateFrom(const Model& other) {
     }
     this->L_ = isingOther.L_;
     this->beta_ = isingOther.beta_;
-    this->NT_ = isingOther.NT_;
+    this->neighborTable_ = isingOther.neighborTable_;
     this->J_ = isingOther.J_;
 }
 
 void IsingModel::initializeNT() {
-    NT_.resize(L_ *L_ *L_ *6);
+    neighborTable_.resize(L_ *L_ *L_ *6);
     for (int i = 0; i < L_; ++i) {
         for (int j = 0; j < L_; ++j) {
             for (int k = 0; k < L_; ++k) {
                 int ind = index(i, j, k);
-                NT_[ind*6+0] = index(i-1, j, k);
-                NT_[ind*6+1] = index(i+1, j, k);
-                NT_[ind*6+2] = index(i, j-1, k);
-                NT_[ind*6+3] = index(i, j+1, k);
-                NT_[ind*6+4] = index(i, j, k-1);
-                NT_[ind*6+5] = index(i, j, k+1);
+                neighborTable_[ind*6+0] = index(i-1, j, k);
+                neighborTable_[ind*6+1] = index(i+1, j, k);
+                neighborTable_[ind*6+2] = index(i, j-1, k);
+                neighborTable_[ind*6+3] = index(i, j+1, k);
+                neighborTable_[ind*6+4] = index(i, j, k-1);
+                neighborTable_[ind*6+5] = index(i, j, k+1);
             }
         }
     }
@@ -77,10 +77,10 @@ int IsingModel::getSpin(int i, int j, int k) const {
 int IsingModel::index(int i, int j, int k) const {
     return mod(i) * L_ * L_ + mod(j) * L_ + mod(k);
 }
-std::vector<int> IsingModel::getNeighbors(int ind) const { // Only used for testing NT_. For actual runs, directly calculate indices for speed
+std::vector<int> IsingModel::getNeighbors(int ind) const { // Only used for testing neighborTable_. For actual runs, directly calculate indices for speed
     std::vector<int> neighbors(6);
     for (int i = 0; i < 6; ++i) {
-        neighbors[i] = NT_[ind*6+i];
+        neighbors[i] = neighborTable_[ind*6+i];
     }
     return neighbors;
 }
@@ -121,7 +121,7 @@ double IsingModel::calcEnergy() const {
     double energy = 0.0;
     for (int i = 0; i < L_ *L_ *L_; ++i) {
         for (int n = 0; n < 6; n += 2) {
-            int j = NT_[i *6 + n];
+            int j = neighborTable_[i *6 + n];
             energy += spins_[i] *spins_[j];
         }
     }
@@ -132,7 +132,7 @@ double IsingModel::calcEnergy() const {
 int IsingModel::calcLocalH(int i) const {
     int local_h = 0;
     for (int n = 0; n < 6; ++n) {
-        int j = NT_[i *6 + n];
+        int j = neighborTable_[i *6 + n];
         local_h += spins_[j];
     }
     return local_h;
@@ -180,7 +180,7 @@ int IsingModel::wolff() {
 
         // Check neighbors
         for (int n = 0; n < 6; ++n) {
-            int j = NT_[i * 6 + n]; // Neighbor index
+            int j = neighborTable_[i * 6 + n]; // Neighbor index
 
             // If neighbor has the same spin and isn't visited, try adding to cluster
             if (!visited[j] && spins_[j] == clusterSpin && gsl_rng_uniform(r) < P_add) {

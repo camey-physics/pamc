@@ -47,7 +47,7 @@ private:
     int seed_;
     int* spins_;
     bool ownsSpins_ = true;
-    std::vector<int> NT_;
+    std::vector<int> neighborTable_;
 
     // Monte Carlo update methods
     void metropolis(int i);
