@@ -3,12 +3,29 @@
 #include <stdexcept>
 #include <cmath>
 
-IsingModel::IsingModel(int L, double beta, double J, int seed) : L_(L), J_(J), beta_(beta), seed_(seed) {
-    spins_.resize(L *L *L, 1);
+// Default constructor allocates its own memory
+IsingModel::IsingModel(int L, double beta, double J, int seed)
+    : L_(L), J_(J), beta_(beta), seed_(seed), ownsSpins_(true) {
+    spins_ = new int[L * L * L];
     r = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set(r, seed_);
     initializeNT();
     initializeState();
+}
+
+// External memory version (non-owning)
+IsingModel::IsingModel(int L, double beta, double J, int seed, int* externalSpins)
+    : L_(L), J_(J), beta_(beta), seed_(seed), spins_(externalSpins), ownsSpins_(false) {
+    r = gsl_rng_alloc(gsl_rng_mt19937);
+    gsl_rng_set(r, seed_);
+    initializeNT();
+}
+
+IsingModel::~IsingModel() {
+    if (ownsSpins_) {
+        delete[] spins_;
+    }
+    gsl_rng_free(r);
 }
 
 void IsingModel::initializeState() {
@@ -26,7 +43,10 @@ void IsingModel::initializeAllUp() {
 
 void IsingModel::copyStateFrom(const Model& other) {
     const IsingModel& isingOther = static_cast<const IsingModel&>(other);
-    this->spins_ = isingOther.spins_;
+    // this->spins_ = isingOther.spins_;
+    for (int i = 0; i < L_ *L_ *L_; ++i) {
+        this->spins_[i] = isingOther.spins_[i];
+    }
     this->L_ = isingOther.L_;
     this->beta_ = isingOther.beta_;
     this->NT_ = isingOther.NT_;
@@ -50,10 +70,6 @@ void IsingModel::initializeNT() {
     }
 }
 
-IsingModel::~IsingModel() {
-    gsl_rng_free(r);
-}
-
 int IsingModel::getSpin(int i, int j, int k) const {
     return spins_[index(i, j, k)];
 }
@@ -71,6 +87,10 @@ std::vector<int> IsingModel::getNeighbors(int ind) const { // Only used for test
 
 double IsingModel::getBeta() const{
     return beta_;
+}
+
+int* IsingModel::getSpinPointer() const {
+    return spins_;  // Always valid
 }
 
 double IsingModel::calcMagnetization() const {

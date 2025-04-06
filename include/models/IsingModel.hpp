@@ -10,6 +10,7 @@
 class IsingModel : public Model {
 public:
     explicit IsingModel(int L, double beta, double J, int seed);
+    IsingModel(int L, double beta, double J, int seed, int* externalSpins);
     ~IsingModel();
     void initializeState() override; // Randomizes spins
     void initializeAllUp();
@@ -23,6 +24,7 @@ public:
     auto getParams() const {
         return std::make_tuple(L_, J_, beta_, seed_);
     }
+    int* getSpinPointer() const;
 
     // Modifier methods
     void setSpin(int i, int j, int k, int val);
@@ -43,7 +45,8 @@ private:
     double J_;
     double beta_;
     int seed_;
-    std::vector<int> spins_;
+    int* spins_;
+    bool ownsSpins_ = true;
     std::vector<int> NT_;
 
     // Monte Carlo update methods
