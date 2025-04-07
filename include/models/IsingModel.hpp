@@ -9,8 +9,7 @@
 
 class IsingModel : public Model {
 public:
-    explicit IsingModel(int L, double beta, double J, int seed);
-    IsingModel(int L, double beta, double J, int seed, int* externalSpins);
+    IsingModel(int L, double beta, double J, int seed, int* externalSpins = nullptr, int* neighborTable = nullptr);
     ~IsingModel();
     void initializeState() override; // Randomizes spins
     void initializeAllUp();
@@ -47,7 +46,8 @@ private:
     int seed_;
     int* spins_;
     bool ownsSpins_ = true;
-    std::vector<int> neighborTable_;
+    int* neighborTable_;
+    bool ownsNeighborTable_ = true;
 
     // Monte Carlo update methods
     void metropolis(int i);
@@ -56,7 +56,7 @@ private:
 
     inline int index(int i, int j, int k) const;
     inline int mod(int i) const;
-    void initializeNT();
+    void initializeNeighborTable_();
     gsl_rng *r;
     int calcLocalH(int i) const;
 

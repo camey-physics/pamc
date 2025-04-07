@@ -2,28 +2,36 @@
 #include <gsl/gsl_rng.h>
 #include <stdexcept>
 #include <cmath>
+#include <cassert>
 
 // Default constructor allocates its own memory
-IsingModel::IsingModel(int L, double beta, double J, int seed)
-    : L_(L), J_(J), beta_(beta), seed_(seed), ownsSpins_(true) {
-    spins_ = new int[L * L * L];
-    r = gsl_rng_alloc(gsl_rng_mt19937);
-    gsl_rng_set(r, seed_);
-    initializeNT();
-    initializeState();
-}
+IsingModel::IsingModel(int L, double beta, double J, int seed, int* externalSpins, int* neighborTable)
+: L_(L), J_(J), beta_(beta), seed_(seed), neighborTable_(neighborTable), spins_(externalSpins), ownsSpins_(false), ownsNeighborTable_(false) {
 
-// External memory version (non-owning)
-IsingModel::IsingModel(int L, double beta, double J, int seed, int* externalSpins)
-    : L_(L), J_(J), beta_(beta), seed_(seed), spins_(externalSpins), ownsSpins_(false) {
+    if (spins_ == nullptr) {
+        // If no external spins are provided, allocate internal memory
+        ownsSpins_ = true;
+        spins_ = new int[L_ * L_ * L_];
+    }
+
     r = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set(r, seed_);
-    initializeNT();
+
+    if (neighborTable == nullptr) {
+        ownsNeighborTable_ = true;
+        neighborTable_ = new int[6 * L_ * L_ * L_];
+        initializeNeighborTable_();
+    }
+
+    initializeState();  // Randomize the spins or set them as per the class design
 }
 
 IsingModel::~IsingModel() {
     if (ownsSpins_) {
         delete[] spins_;
+    }
+    if (ownsNeighborTable_) {
+        delete[] neighborTable_;
     }
     gsl_rng_free(r);
 }
@@ -43,18 +51,21 @@ void IsingModel::initializeAllUp() {
 
 void IsingModel::copyStateFrom(const Model& other) {
     const IsingModel& isingOther = static_cast<const IsingModel&>(other);
+    assert(this->L_ == isingOther.L_ && "System sizes must match!");
     // this->spins_ = isingOther.spins_;
     for (int i = 0; i < L_ *L_ *L_; ++i) {
         this->spins_[i] = isingOther.spins_[i];
     }
     this->L_ = isingOther.L_;
     this->beta_ = isingOther.beta_;
-    this->neighborTable_ = isingOther.neighborTable_;
     this->J_ = isingOther.J_;
+    for (int i = 0; i < L_ *L_ *L_; ++i) {
+        this->spins_[i] = isingOther.spins_[i];
+    }
 }
 
-void IsingModel::initializeNT() {
-    neighborTable_.resize(L_ *L_ *L_ *6);
+void IsingModel::initializeNeighborTable_() {
+    // neighborTable_.resize(L_ *L_ *L_ *6);
     for (int i = 0; i < L_; ++i) {
         for (int j = 0; j < L_; ++j) {
             for (int k = 0; k < L_; ++k) {

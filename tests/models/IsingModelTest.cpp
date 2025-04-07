@@ -50,7 +50,7 @@ TEST_F(IsingModelTest, TestParams) {
 
 TEST_F(IsingModelTest, CalcEnergy) {
     int L5 = 5;
-    IsingModel model(L5, 1, 1, 5000);
+    IsingModel model(L5, 1.0, 1.0, 5000);
     model.initializeAllUp();
     EXPECT_NEAR(model.calcEnergy(), -3.0, 1e-10);
 
