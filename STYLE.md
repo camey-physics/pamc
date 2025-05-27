@@ -30,9 +30,10 @@ This style guide defines naming and structural conventions used throughout the P
 
 ## File Organization
 
-- **`include/`**: Public headers, abstract interfaces (e.g., `Model.hpp`)
-- **`models/`**: Model implementations (e.g., `IsingModel`)
+- **`include/`**: Public headers, abstract interfaces (e.g., `Model.hpp`, `Population.hpp`)
+- **`include/models/`**: Model headers (e.g., `IsingModel.hpp`)
 - **`src/`**: Core algorithm components (e.g., `Population.cpp`)
+- **`src/models/`**: Model implementations (e.g., `IsingModel.cpp`)
 - **`tests/`**: Unit tests (GoogleTest)
 
 ---

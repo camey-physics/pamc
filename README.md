@@ -21,12 +21,11 @@ This project is a clean, modular C++ implementation of the Population Annealing 
 
 ## Code Structure (In Progress)
 
-```
-include/ # Public headers
-src/ # Core implementation
-models/ # Model definitions (e.g. IsingModel)
-tests/ # Unit tests (GoogleTest)
-```
+- **`include/`**: Public headers, abstract interfaces (e.g., `Model.hpp`, `Population.hpp`)
+- **`include/models/`**: Model headers (e.g., `IsingModel.hpp`)
+- **`src/`**: Core algorithm components (e.g., `Population.cpp`)
+- **`src/models/`**: Model implementations (e.g., `IsingModel.cpp`)
+- **`tests/`**: Unit tests (GoogleTest)
 
 ## License
 
