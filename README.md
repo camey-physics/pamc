@@ -1,6 +1,6 @@
 # Population Annealing Monte Carlo (PAMC)
 
-[!WARNING] **Project Status**: This project is under active development. Core structure is in place, but key functionality is still being implemented.
+⚠️ **Project Status**: This project is under active development. Core structure is in place, but key functionality is still being implemented.
 
 This project is a clean, modular C++ implementation of the Population Annealing Monte Carlo (PAMC) algorithm, with an initial focus on spin glass systems in the canonical ensemble. It is designed to be extensible, testable, and performant, with shared disorder structures, parallelism, and long-term flexibility for scientific and industrial applications.
 
