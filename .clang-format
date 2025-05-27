@@ -1,0 +1,24 @@
+BasedOnStyle: Google
+IndentWidth: 2
+ColumnLimit: 80
+
+# Optional: Keep braces on same line (Google default already does this)
+BraceWrapping:
+  AfterClass: false
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeCatch: false
+  BeforeElse: false
+
+# Optional: Pointer/reference alignment (Google default is `int* ptr`)
+PointerAlignment: Right  # or Left (LLVM) or Middle
+
+# Optional: control sorting of includes
+SortIncludes: true
+
+# Optional: extra safety
+AllowShortIfStatementsOnASingleLine: false
