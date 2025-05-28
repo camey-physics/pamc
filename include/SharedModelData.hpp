@@ -6,12 +6,21 @@ template <typename ModelT>
 struct SharedModelData;
 
 // Specialization for IsingModel
+// The bond and neighbor tables are specified externally. The only constraint is
+// that all spins must have the same number of neighbors.
 struct SharedModelData<class IsingModel> {
-    int system_size;
-    int num_spins;
-    int num_neighbors;
-    const int* neighbor_table;
-    const double* bond_table;
+  const int system_size;
+  const int num_spins;
+  const int num_neighbors;
+  const int* neighbor_table;
+  const double* bond_table;
+  SharedModelData(int system_size, int num_spins, int num_neighbors,
+                  const int* neighbor_table, const double* bond_table)
+      : system_size(system_size),
+        num_spins(num_spins),
+        num_neighbors(num_neighbors),
+        neighbor_table(neighbor_table),
+        bond_table(bond_table) {}
 };
 
 #endif
