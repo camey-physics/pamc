@@ -8,6 +8,7 @@
 
 IsingModel::IsingModel(const SharedModelData<IsingModel>& shared_data)
     : num_spins_(shared_data.num_spins),
+      num_neighbors_(shared_data.num_neighbors),
       system_size_(shared_data.system_size),
       neighbor_table_(shared_data.neighbor_table),
       bond_table_(shared_data.bond_table) {
@@ -40,10 +41,18 @@ void IsingModel::copyStateFrom(const Model& other) {
 double IsingModel::calcEnergy() const {
   double energy = 0.0;
   for (int i = 0; i < num_spins_; ++i) {
-    for (int n = 0; n < 6; n += 2) {
-      int j = neighbor_table_[i * 6 + n];
-      energy += spins_[i] * spins_[j] * bond_table_[i * 6 + n];
+    for (int n = 0; n < num_neighbors_; n += 2) {
+      int j = neighbor_table_[i * num_neighbors_ + n];
+      energy += spins_[i] * spins_[j] * bond_table_[i * num_neighbors_ + n];
     }
   }
   return energy / num_spins_;
+}
+
+double IsingModel::calcMagnetization() const {
+    int mag = 0;
+    for (int i = 0; i < num_spins_; ++i) {
+        mag += spins_[i];
+    }
+    return static_cast<double>(mag) / num_spins_;
 }
