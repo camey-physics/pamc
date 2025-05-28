@@ -13,22 +13,18 @@
 class IsingModel : public Model {
  public:
   explicit IsingModel(const SharedModelData<IsingModel>& shared_data);
-  void initializeState() override;
+  ~IsingModel();
+  void initializeState(gsl_rng* r) override;
   void copyStateFrom(const Model& other) override;
 
-  // enum class UpdateMethod {};
+  enum class UpdateMethod { metropolis, heatBath, wolff };
   double calcEnergy() const override;
-  // Required by the Model.hpp interface, not needed for IsingModel.
-  void updateSweep(int num_sweeps) override {
-    throw std::logic_error(
-        "IsingModel::updateSweep(num_sweeps) is not supported — use "
-        "updateSweep(num_sweeps, beta) instead.");
-  }
-  void updateSweep(int num_sweeps, double beta);
+  void updateSweep(int num_sweeps, double beta, gsl_rng* r) override;
 
  private:
-  int num_spins_;
-  int system_size_;
+  // Shared model data, immutable
+  const int num_spins_;
+  const int system_size_;
   const int* neighbor_table_;
   const double* bond_table_;
   int8_t* spins_;
