@@ -9,6 +9,7 @@ struct SharedModelData;
 struct SharedModelData<class IsingModel> {
     int system_size;
     int num_spins;
+    int num_neighbors;
     const int* neighbor_table;
     const double* bond_table;
 };
