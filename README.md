@@ -13,7 +13,7 @@ This project is a clean, modular C++ implementation of the Population Annealing 
 
 ## Core Features and Roadmap
 
-- [ ] Clean `Model` base class
+- [x] Clean `Model` base class
 - [ ] Initial `IsingModel` implementation with shared `ModelData`
 - [ ] `Population` class to manage replicas, annealing, and resampling
 - [ ] Resampling mechanism (multinomial to start)

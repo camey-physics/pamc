@@ -9,7 +9,7 @@ class Model {
 
   enum class UpdateMethod {};
   virtual double calcEnergy() const = 0;
-  virtual void updateSweep(int numSweeps) = 0;
+  virtual void updateSweep(int num_sweeps) = 0;
 };
 
 #endif  // MODEL_HPP

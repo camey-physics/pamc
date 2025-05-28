@@ -5,4 +5,12 @@
 template <typename ModelT>
 struct SharedModelData;
 
+// Specialization for IsingModel
+struct SharedModelData<class IsingModel> {
+    int system_size;
+    int num_spins;
+    const int* neighbor_table;
+    const double* bond_table;
+};
+
 #endif
