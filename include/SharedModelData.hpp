@@ -8,6 +8,8 @@ struct SharedModelData;
 // Specialization for IsingModel
 // The bond and neighbor tables are specified externally. The only constraint is
 // that all spins must have the same number of neighbors.
+// Consider changing neighbor_table and bond_table to std::span for bounds
+// checking.
 struct SharedModelData<class IsingModel> {
   const int system_size;
   const int num_spins;
