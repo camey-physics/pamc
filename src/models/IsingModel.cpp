@@ -56,3 +56,46 @@ double IsingModel::calcMagnetization() const {
     }
     return static_cast<double>(mag) / num_spins_;
 }
+
+void IsingModel::updateSweep(int num_sweeps, double beta, gsl_rng* r, UpdateMethod method, bool sequential) {
+    void (IsingModel::*update_func)(gsl_rng*, int) = nullptr;
+    switch (method) {
+        case UpdateMethod::metropolis:
+            update_func = &IsingModel::metropolis;
+            break;
+        case UpdateMethod::heatBath:
+            update_func = &IsingModel::heatBath;
+            break;
+        case UpdateMethod::wolff:
+            if (sequential) {
+                throw std::invalid_argument("Wolff update cannot be used with sequential mode!");
+            }
+            // Wolff method handled separately below due to randomness in number of flipped spins
+            for (int sweep = 0; sweep < num_sweeps; ++sweep) {
+                int num_flipped = 0;
+                while (num_flipped < num_spins_) {
+                    num_flipped += wolff(r);
+                }
+            }
+            return;
+        default:
+            throw std::invalid_argument("Unknown update method!");
+    }
+
+    // For Metropolis and HeatBath, use the chosen update function pointer and flip spins individually
+    if (sequential) {
+        for (int sweep = 0; sweep < num_sweeps; ++sweep) {
+            for (int ind = 0; ind < num_spins_; ++ind) {
+                (this->*update_func)(r, ind);  
+            }
+        }
+    }
+    else {
+        for (int sweep = 0; sweep < num_sweeps; ++sweep) {
+            for (int ind = 0; ind < num_spins_; ++ind) {
+                int s = gsl_rng_uniform_int(r, num_spins_);
+                (this->*update_func)(r, s);  
+            }
+        }
+    }
+}

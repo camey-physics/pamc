@@ -26,8 +26,13 @@ class IsingModel : public Model {
   double calcEnergy() const override;
   double calcMagnetization() const;
 
-
-  void updateSweep(int num_sweeps, double beta, gsl_rng* r) override;
+  // Monte Carlo sweep methods.
+  // By default uses metropolis updates on randomly selected spins
+  void updateSweep(int num_sweeps, double beta, gsl_rng* r) override {
+    updateSweep(num_sweeps, beta, r, UpdateMethod::metropolis, false);
+  }
+  void updateSweep(int num_sweeps, double beta, gsl_rng* r, UpdateMethod method,
+                   bool sequential = false);
 
  private:
   // Shared model data, immutable
@@ -39,6 +44,11 @@ class IsingModel : public Model {
 
   // Owned data
   int8_t* spins_;
+
+  // Monte Carlo update methods
+  void metropolis(gsl_rng* r, int i);
+  void heatBath(gsl_rng* r, int i);
+  int wolff(gsl_rng* r);
 };
 
 #endif  // ISING_MODEL_HPP
