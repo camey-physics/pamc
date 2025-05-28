@@ -12,6 +12,8 @@ IsingModel::IsingModel(const SharedModelData<IsingModel>& shared_data)
       system_size_(shared_data.system_size),
       neighbor_table_(shared_data.neighbor_table),
       bond_table_(shared_data.bond_table) {
+  assert(num_neighbors_ % 2 == 0 &&
+         "Neighbor table must use even pairing (+/- directions)");
   spins_ = new int8_t[num_spins_];
   for (int i = 0; i < num_spins_; ++i) {
     spins_[i] = 1;
@@ -41,6 +43,8 @@ void IsingModel::copyStateFrom(const Model& other) {
 double IsingModel::calcEnergy() const {
   double energy = 0.0;
   for (int i = 0; i < num_spins_; ++i) {
+    // Skip every second neighbor to avoid double-counting bonds.
+    // Assumes symmetric neighbor table with even num_neighbors_.
     for (int n = 0; n < num_neighbors_; n += 2) {
       int j = neighbor_table_[i * num_neighbors_ + n];
       energy += spins_[i] * spins_[j] * bond_table_[i * num_neighbors_ + n];
@@ -50,52 +54,62 @@ double IsingModel::calcEnergy() const {
 }
 
 double IsingModel::calcMagnetization() const {
-    int mag = 0;
-    for (int i = 0; i < num_spins_; ++i) {
-        mag += spins_[i];
-    }
-    return static_cast<double>(mag) / num_spins_;
+  int mag = 0;
+  for (int i = 0; i < num_spins_; ++i) {
+    mag += spins_[i];
+  }
+  return static_cast<double>(mag) / num_spins_;
 }
 
-void IsingModel::updateSweep(int num_sweeps, double beta, gsl_rng* r, UpdateMethod method, bool sequential) {
-    void (IsingModel::*update_func)(gsl_rng*, int) = nullptr;
-    switch (method) {
-        case UpdateMethod::metropolis:
-            update_func = &IsingModel::metropolis;
-            break;
-        case UpdateMethod::heatBath:
-            update_func = &IsingModel::heatBath;
-            break;
-        case UpdateMethod::wolff:
-            if (sequential) {
-                throw std::invalid_argument("Wolff update cannot be used with sequential mode!");
-            }
-            // Wolff method handled separately below due to randomness in number of flipped spins
-            for (int sweep = 0; sweep < num_sweeps; ++sweep) {
-                int num_flipped = 0;
-                while (num_flipped < num_spins_) {
-                    num_flipped += wolff(r);
-                }
-            }
-            return;
-        default:
-            throw std::invalid_argument("Unknown update method!");
-    }
+void IsingModel::updateSweep(int num_sweeps, double beta, gsl_rng* r,
+                             UpdateMethod method, bool sequential) {
+  void (IsingModel::*update_func)(gsl_rng*, int) = nullptr;
+  switch (method) {
+    case UpdateMethod::metropolis:
+      update_func = &IsingModel::metropolis;
+      break;
+    case UpdateMethod::heatBath:
+      update_func = &IsingModel::heatBath;
+      break;
+    case UpdateMethod::wolff:
+      if (sequential) {
+        throw std::invalid_argument(
+            "Wolff update cannot be used with sequential mode");
+      }
+      // wolff method handled separately below due to randomness in number of
+      // flipped spins
+      for (int sweep = 0; sweep < num_sweeps; ++sweep) {
+        int num_flipped = 0;
+        while (num_flipped < num_spins_) {
+          num_flipped += wolff(r);
+        }
+      }
+      return;
+    default:
+      throw std::invalid_argument("Unknown update method!");
+  }
 
-    // For Metropolis and HeatBath, use the chosen update function pointer and flip spins individually
-    if (sequential) {
-        for (int sweep = 0; sweep < num_sweeps; ++sweep) {
-            for (int ind = 0; ind < num_spins_; ++ind) {
-                (this->*update_func)(r, ind);  
-            }
-        }
+  // For metropolis and heatBath, use the chosen update function pointer and
+  // flip spins individually
+  if (sequential) {
+    for (int sweep = 0; sweep < num_sweeps; ++sweep) {
+      for (int ind = 0; ind < num_spins_; ++ind) {
+        (this->*update_func)(r, ind);
+      }
     }
-    else {
-        for (int sweep = 0; sweep < num_sweeps; ++sweep) {
-            for (int ind = 0; ind < num_spins_; ++ind) {
-                int s = gsl_rng_uniform_int(r, num_spins_);
-                (this->*update_func)(r, s);  
-            }
-        }
+  } else {
+    for (int sweep = 0; sweep < num_sweeps; ++sweep) {
+      for (int ind = 0; ind < num_spins_; ++ind) {
+        int s = gsl_rng_uniform_int(r, num_spins_);
+        (this->*update_func)(r, s);
+      }
     }
+  }
+}
+
+void IsingModel::setSpin(int i, int val) {
+  if (val != 1 && val != -1) {
+    throw std::invalid_argument("Spin value must be +1 or -1");
+  }
+  spins_[i] = val;
 }

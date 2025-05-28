@@ -34,6 +34,9 @@ class IsingModel : public Model {
   void updateSweep(int num_sweeps, double beta, gsl_rng* r, UpdateMethod method,
                    bool sequential = false);
 
+  // Methods for unit testing IsingModel class
+  void setSpin(int i, int val);
+
  private:
   // Shared model data, immutable
   const int num_spins_;
@@ -49,6 +52,8 @@ class IsingModel : public Model {
   void metropolis(gsl_rng* r, int i);
   void heatBath(gsl_rng* r, int i);
   int wolff(gsl_rng* r);
+
+  // Helper functions
 };
 
 #endif  // ISING_MODEL_HPP
