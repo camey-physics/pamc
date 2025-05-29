@@ -23,6 +23,7 @@ file(GLOB_RECURSE TEST_FILES ${CMAKE_SOURCE_DIR}/tests/*.cpp)
 # Source files for model implementations
 set(MODEL_SOURCES
   ${CMAKE_SOURCE_DIR}/src/models/IsingModel.cpp
+  ${CMAKE_SOURCE_DIR}/src/models/Ising3DHelpers.cpp
 )
 
 foreach(test_src ${TEST_FILES})
