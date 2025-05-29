@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
-#include "models/IsingModel.hpp"
+
 #include "SharedModelData.hpp"
+#include "models/IsingModel.hpp"
 
 IsingModel createDummyModel() {
   int dummy_neighbors[6] = {0};
@@ -14,13 +15,16 @@ TEST(IsingModelTest, Construct) {
   const int num_spins = L * L * L;
   const int num_neighbors = 6;
 
-  // Create dummy neighbor and bond tables
-  int neighbor_table[num_spins * num_neighbors] = {0};     // Fill with dummy data
-  double bond_table[num_spins * num_neighbors] = {0.0};     // Fill with dummy data
+  // Create dummy neighbor and bond tables, fill with dummy data
+  int neighbor_table[num_spins * num_neighbors] = {0};
+  double bond_table[num_spins * num_neighbors] = {0.0};
 
-  SharedModelData<IsingModel> data(L, num_spins, num_neighbors, neighbor_table, bond_table);
+  SharedModelData<IsingModel> data(L, num_spins, num_neighbors, neighbor_table,
+                                   bond_table);
   IsingModel model(data);
 
-  // Basic sanity check
-  EXPECT_TRUE(true);  // Test passes if no crash occurs during construction
+  // Check default initialization of spins_
+  for (int i = 0; i < num_spins; ++i) {
+    EXPECT_EQ(model.getSpin(i), 1);
+  }
 }

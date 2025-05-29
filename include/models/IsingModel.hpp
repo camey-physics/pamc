@@ -36,6 +36,7 @@ class IsingModel : public Model {
 
   // Helper methods for unit testing IsingModel class
   void setSpin(int i, int val);
+  int8_t getSpin(int i) const;
 
  private:
   // Shared model data, immutable

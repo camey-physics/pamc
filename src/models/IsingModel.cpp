@@ -114,6 +114,13 @@ void IsingModel::setSpin(int i, int val) {
   spins_[i] = val;
 }
 
+int8_t IsingModel::getSpin(int i) const {
+  if (i < 0 || i >= num_spins_) {
+    throw std::out_of_range("Index out of range");
+  }
+  return spins_[i];
+}
+
 void IsingModel::metropolis(gsl_rng* r, double beta, int i) {
   double delta_E = 0.0;
   for (int n = 0; n < num_neighbors_; ++n) {
@@ -166,11 +173,11 @@ int IsingModel::wolff(gsl_rng* r, double beta) {
 
     // Flip spin
     spins_[i] *= -1;
-    clusterSize++;  // Increment cluster size
+    clusterSize++;
 
     // Check neighbors
     for (int n = 0; n < num_neighbors_; ++n) {
-      int j = neighbor_table_[i * num_neighbors_ + n];  // Neighbor index
+      int j = neighbor_table_[i * num_neighbors_ + n];
 
       // If neighbor has the same spin and isn't visited, try adding to cluster
       if (!visited[j] && spins_[j] == clusterSpin &&
