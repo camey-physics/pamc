@@ -23,7 +23,8 @@ class Model {
   // Optional tag for method-specific updates (e.g. Metropolis, Heat Bath).
   enum class UpdateMethod {};
 
-  // Optional tag for model-specific observables (e.g. Energy, Magnetization, Overlap).
+  // Optional tag for model-specific observables (e.g. Energy, Magnetization,
+  // Overlap).
   enum class Observables {};
 };
 

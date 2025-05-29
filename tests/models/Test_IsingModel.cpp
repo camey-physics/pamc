@@ -133,7 +133,8 @@ TEST(IsingModelTest, MetropolisSweep) {
 
   double avg_energy = 0.0, avg_mag = 0.0;
   for (int i = 0; i < num_samples; ++i) {
-    model.updateSweep(1000, beta, r, IsingModel::UpdateMethod::metropolis, true);
+    model.updateSweep(1000, beta, r, IsingModel::UpdateMethod::metropolis,
+                      true);
     avg_energy += model.calcEnergy();
     avg_mag += model.calcMagnetization();
   }
@@ -166,7 +167,8 @@ TEST(IsingModelTest, HeatBathSweep) {
 
   double avg_energy = 0.0, avg_mag = 0.0;
   for (int i = 0; i < num_samples; ++i) {
-    model.updateSweep(1000, beta, r, IsingModel::UpdateMethod::metropolis, true);
+    model.updateSweep(1000, beta, r, IsingModel::UpdateMethod::metropolis,
+                      true);
     avg_energy += model.calcEnergy();
     avg_mag += model.calcMagnetization();
   }
