@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <gsl/gsl_rng.h>
 
 #include "SharedModelData.hpp"
 #include "models/IsingModel.hpp"
@@ -28,3 +29,26 @@ TEST(IsingModelTest, Construct) {
     EXPECT_EQ(model.getSpin(i), 1);
   }
 }
+
+// TEST(IsingModelTest, RandomInitialize) {
+//   const int L = 4;
+//   const int num_spins = L * L * L;
+//   const int num_neighbors = 6;
+//   gsl_rng *r;
+
+//   r = gsl_rng_alloc(gsl_rng_mt19937);
+//     gsl_rng_set(r, 42);  
+
+//   // Create dummy neighbor and bond tables, fill with dummy data
+//   int neighbor_table[num_spins * num_neighbors] = {0};
+//   double bond_table[num_spins * num_neighbors] = {0.0};
+
+//   SharedModelData<IsingModel> data(L, num_spins, num_neighbors, neighbor_table,
+//                                    bond_table);
+//   IsingModel model(data);
+
+//   // Check default initialization of spins_
+//   for (int i = 0; i < num_spins; ++i) {
+//     EXPECT_EQ(model.getSpin(i), 1);
+//   }
+// }
