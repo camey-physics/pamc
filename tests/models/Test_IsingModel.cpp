@@ -34,6 +34,29 @@ TEST(IsingModelTest, Construct) {
   }
 }
 
+TEST(IsingModelTest, CopyState) {
+  const int L = 10;
+  const int num_spins = L * L * L;
+  const int num_neighbors = 6;
+  double J = 1;
+
+  std::vector<int> neighbor_table = initializeNeighborTable3D(L);
+  std::vector<double> bond_table(num_spins * num_neighbors, J);
+
+  SharedModelData<IsingModel> data(L, num_spins, num_neighbors,
+                                   neighbor_table.data(), bond_table.data());
+  IsingModel model(data);
+  IsingModel model2(data);
+  gsl_rng* r = gsl_rng_alloc(gsl_rng_mt19937);
+  gsl_rng_set(r, 42);
+  model.initializeState(r);
+  model2.copyStateFrom(model);
+
+  for (int i = 0; i < num_spins; ++i) {
+    EXPECT_EQ(model.getSpin(i), model2.getSpin(i));
+  }
+}
+
 TEST(IsingModelTest, CreateNeighborTable) {
   int L = 4;
   std::vector<int> table = initializeNeighborTable3D(L);
@@ -88,6 +111,7 @@ TEST(IsingModelTest, CalcEnergy) {
   EXPECT_NEAR(model.calcEnergy(), -3.0 + 28.0 / num_spins, 1e-10);
 }
 
+// Check that the metropolis algorithm obtains expected high temperature results
 TEST(IsingModelTest, MetropolisSweep) {
   const int L = 10;
   const int num_spins = L * L * L;
@@ -120,6 +144,7 @@ TEST(IsingModelTest, MetropolisSweep) {
   EXPECT_NEAR(avg_mag, 0.0, 5e-2);
 }
 
+// Check that the heat bath algorithm obtains expected high temperature results
 TEST(IsingModelTest, HeatBathSweep) {
   const int L = 10;
   const int num_spins = L * L * L;
@@ -152,6 +177,7 @@ TEST(IsingModelTest, HeatBathSweep) {
   EXPECT_NEAR(avg_mag, 0.0, 5e-2);
 }
 
+// Check that the Wolff algorithm obtains expected low temperature results
 TEST(IsingModelTest, WolffSweep) {
   const int L = 10;
   const int num_spins = L * L * L;
