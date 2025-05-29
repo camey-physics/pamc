@@ -19,7 +19,7 @@ class IsingModel : public Model {
   void copyStateFrom(const Model& other) override;
 
   // IsingModel specific enumerated classes
-  enum class UpdateMethod { metropolis, heatBath, wolff };
+  enum class UpdateMethod { metropolis, heat_bath, wolff };
   enum class Observables { energy, magnetization };
 
   // IsingModel observable methods
