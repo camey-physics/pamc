@@ -42,8 +42,6 @@ This style guide defines naming and structural conventions used throughout the P
 
 - Always prefer `const` where possible
 - Pass large objects by reference or pointer
-- Use `std::span<T>` when passing views into shared or contiguous data
-- Avoid raw pointers unless for non-owning access to external memory (e.g., pooled data)
 
 ---
 
