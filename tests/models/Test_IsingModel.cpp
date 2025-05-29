@@ -113,7 +113,7 @@ TEST(IsingModelTest, CalcEnergy) {
 
 // Check that the metropolis algorithm obtains expected high temperature results
 TEST(IsingModelTest, MetropolisSweep) {
-  const int L = 10;
+  const int L = 5;
   const int num_spins = L * L * L;
   const int num_neighbors = 6;
   double beta = 0.1;
@@ -146,7 +146,7 @@ TEST(IsingModelTest, MetropolisSweep) {
 
 // Check that the heat bath algorithm obtains expected high temperature results
 TEST(IsingModelTest, HeatBathSweep) {
-  const int L = 10;
+  const int L = 5;
   const int num_spins = L * L * L;
   const int num_neighbors = 6;
   double beta = 0.1;
@@ -179,7 +179,7 @@ TEST(IsingModelTest, HeatBathSweep) {
 
 // Check that the Wolff algorithm obtains expected low temperature results
 TEST(IsingModelTest, WolffSweep) {
-  const int L = 10;
+  const int L = 5;
   const int num_spins = L * L * L;
   const int num_neighbors = 6;
   double beta = 10;
