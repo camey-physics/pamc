@@ -1,14 +1,5 @@
 #include "models/Ising3DHelpers.hpp"
 
-int mod(int i, int system_size) {
-  return (i % system_size + system_size) % system_size;
-}
-
-int index3D(int i, int j, int k, int system_size) {
-  return mod(i, system_size) * system_size * system_size +
-         mod(j, system_size) * system_size + mod(k, system_size);
-}
-
 std::vector<int> initializeNeighborTable3D(int system_size) {
   int L = system_size;
   int num_spins = L * L * L;
