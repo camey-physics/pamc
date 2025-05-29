@@ -151,3 +151,35 @@ TEST(IsingModelTest, HeatBathSweep) {
   EXPECT_NEAR(avg_energy, -3 * J * tanh(beta * J), 5e-2);
   EXPECT_NEAR(avg_mag, 0.0, 5e-2);
 }
+
+TEST(IsingModelTest, WolffSweep) {
+  const int L = 10;
+  const int num_spins = L * L * L;
+  const int num_neighbors = 6;
+  double beta = 10;
+  int num_samples = 100;
+  double J = 1;
+
+  std::vector<int> neighbor_table = initializeNeighborTable3D(L);
+  std::vector<double> bond_table(num_spins * num_neighbors, J);
+
+  SharedModelData<IsingModel> data(L, num_spins, num_neighbors,
+                                   neighbor_table.data(), bond_table.data());
+  IsingModel model(data);
+  gsl_rng* r = gsl_rng_alloc(gsl_rng_mt19937);
+  gsl_rng_set(r, 42);
+  model.initializeState(r);
+  model.updateSweep(20, beta, r, IsingModel::UpdateMethod::wolff, false);
+
+  double avg_energy = 0.0, avg_mag = 0.0;
+  for (int i = 0; i < num_samples; ++i) {
+    model.updateSweep(10, beta, r, IsingModel::UpdateMethod::wolff, false);
+    avg_energy += model.calcEnergy();
+    avg_mag += abs(model.calcMagnetization());
+  }
+  avg_energy /= num_samples;
+  avg_mag /= num_samples;
+
+  EXPECT_NEAR(avg_energy, -3, 5e-2);
+  EXPECT_NEAR(avg_mag, 1.0, 5e-2);
+}
