@@ -34,7 +34,7 @@ class IsingModel : public Model {
   void updateSweep(int num_sweeps, double beta, gsl_rng* r, UpdateMethod method,
                    bool sequential = false);
 
-  // Methods for unit testing IsingModel class
+  // Helper methods for unit testing IsingModel class
   void setSpin(int i, int val);
 
  private:
@@ -49,9 +49,9 @@ class IsingModel : public Model {
   int8_t* spins_;
 
   // Monte Carlo update methods
-  void metropolis(gsl_rng* r, int i);
-  void heatBath(gsl_rng* r, int i);
-  int wolff(gsl_rng* r);
+  void metropolis(gsl_rng* r, double beta, int i);
+  void heatBath(gsl_rng* r, double beta, int i);
+  int wolff(gsl_rng* r, double beta);
 
   // Helper functions
 };

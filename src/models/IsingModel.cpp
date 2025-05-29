@@ -1,4 +1,4 @@
-#include "IsingModel.hpp"
+#include "models/IsingModel.hpp"
 
 #include <gsl/gsl_rng.h>
 
@@ -63,7 +63,7 @@ double IsingModel::calcMagnetization() const {
 
 void IsingModel::updateSweep(int num_sweeps, double beta, gsl_rng* r,
                              UpdateMethod method, bool sequential) {
-  void (IsingModel::*update_func)(gsl_rng*, int) = nullptr;
+  void (IsingModel::*update_func)(gsl_rng*, double, int) = nullptr;
   switch (method) {
     case UpdateMethod::metropolis:
       update_func = &IsingModel::metropolis;
@@ -81,7 +81,7 @@ void IsingModel::updateSweep(int num_sweeps, double beta, gsl_rng* r,
       for (int sweep = 0; sweep < num_sweeps; ++sweep) {
         int num_flipped = 0;
         while (num_flipped < num_spins_) {
-          num_flipped += wolff(r);
+          num_flipped += wolff(r, beta);
         }
       }
       return;
@@ -93,15 +93,15 @@ void IsingModel::updateSweep(int num_sweeps, double beta, gsl_rng* r,
   // flip spins individually
   if (sequential) {
     for (int sweep = 0; sweep < num_sweeps; ++sweep) {
-      for (int ind = 0; ind < num_spins_; ++ind) {
-        (this->*update_func)(r, ind);
+      for (int i = 0; i < num_spins_; ++i) {
+        (this->*update_func)(r, beta, i);
       }
     }
   } else {
     for (int sweep = 0; sweep < num_sweeps; ++sweep) {
-      for (int ind = 0; ind < num_spins_; ++ind) {
+      for (int i = 0; i < num_spins_; ++i) {
         int s = gsl_rng_uniform_int(r, num_spins_);
-        (this->*update_func)(r, s);
+        (this->*update_func)(r, beta, s);
       }
     }
   }
@@ -112,4 +112,75 @@ void IsingModel::setSpin(int i, int val) {
     throw std::invalid_argument("Spin value must be +1 or -1");
   }
   spins_[i] = val;
+}
+
+void IsingModel::metropolis(gsl_rng* r, double beta, int i) {
+  double delta_E = 0.0;
+  for (int n = 0; n < num_neighbors_; ++n) {
+    int j = neighbor_table_[i * num_neighbors_ + n];
+    delta_E += spins_[j] * bond_table_[i * num_neighbors_ + n];
+  }
+  delta_E *= 2 * spins_[i];
+
+  if (delta_E <= 0 || gsl_rng_uniform(r) < exp(-beta * delta_E)) {
+    spins_[i] *= -1;
+  }
+}
+
+void IsingModel::heatBath(gsl_rng* r, double beta, int i) {
+  double local_h = 0.0;
+  for (int n = 0; n < num_neighbors_; ++n) {
+    int j = neighbor_table_[i * num_neighbors_ + n];
+    local_h += spins_[j] * bond_table_[i * num_neighbors_ + n];
+  }
+  double probUp = 1 / (1 + exp(-2 * beta * local_h));
+  if (gsl_rng_uniform(r) < probUp) {
+    spins_[i] = 1;
+  } else {
+    spins_[i] = -1;
+  }
+}
+
+int IsingModel::wolff(gsl_rng* r, double beta) {
+  std::vector<bool> visited(num_spins_, false);
+  std::vector<int> stack;
+  // To keep track of the cluster size
+  int clusterSize = 0;
+  // This implementation of the Wolff algorithm is set up for Ising models that
+  // have constant bond value.
+  double J = bond_table_[0];
+
+  // Pick a random starting spin
+  int ind = gsl_rng_uniform_int(r, num_spins_);
+  // Spin type of cluster
+  int clusterSpin = spins_[ind];
+  stack.push_back(ind);
+  visited[ind] = true;
+
+  // Probability of adding bond to cluster
+  double P_add = 1 - exp(-2 * beta * J);
+
+  while (!stack.empty()) {
+    int i = stack.back();
+    stack.pop_back();
+
+    // Flip spin
+    spins_[i] *= -1;
+    clusterSize++;  // Increment cluster size
+
+    // Check neighbors
+    for (int n = 0; n < num_neighbors_; ++n) {
+      int j = neighbor_table_[i * num_neighbors_ + n];  // Neighbor index
+
+      // If neighbor has the same spin and isn't visited, try adding to cluster
+      if (!visited[j] && spins_[j] == clusterSpin &&
+          gsl_rng_uniform(r) < P_add) {
+        stack.push_back(j);
+        visited[j] = true;
+      }
+    }
+  }
+
+  // Return the size of the cluster
+  return clusterSize;
 }
