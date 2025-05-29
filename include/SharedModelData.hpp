@@ -10,6 +10,7 @@ struct SharedModelData;
 // that all spins must have the same number of neighbors.
 // Consider changing neighbor_table and bond_table to std::span for bounds
 // checking.
+template<>
 struct SharedModelData<class IsingModel> {
   const int system_size;
   const int num_spins;
