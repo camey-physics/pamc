@@ -47,7 +47,7 @@ double IsingModel::calcEnergy() const {
     // Assumes symmetric neighbor table with even num_neighbors_.
     for (int n = 0; n < num_neighbors_; n += 2) {
       int j = neighbor_table_[i * num_neighbors_ + n];
-      energy += spins_[i] * spins_[j] * bond_table_[i * num_neighbors_ + n];
+      energy -= spins_[i] * spins_[j] * bond_table_[i * num_neighbors_ + n];
     }
   }
   return energy / num_spins_;
@@ -68,7 +68,7 @@ void IsingModel::updateSweep(int num_sweeps, double beta, gsl_rng* r,
     case UpdateMethod::metropolis:
       update_func = &IsingModel::metropolis;
       break;
-    case UpdateMethod::heatBath:
+    case UpdateMethod::heat_bath:
       update_func = &IsingModel::heatBath;
       break;
     case UpdateMethod::wolff:
