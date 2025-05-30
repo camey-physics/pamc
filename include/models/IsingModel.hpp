@@ -20,7 +20,7 @@ class IsingModel : public Model {
 
   // IsingModel specific enumerated classes
   enum class UpdateMethod { metropolis, heat_bath, wolff };
-  enum class Observables { energy, magnetization };
+  enum class Observable { energy, magnetization };
 
   // IsingModel observable methods
   double calcEnergy() const override;

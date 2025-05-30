@@ -25,7 +25,12 @@ class Model {
 
   // Optional tag for model-specific observables (e.g. Energy, Magnetization,
   // Overlap).
-  enum class Observables {};
+  enum class Observable {};
+
+  // Generic method to measure observables with generic input. Still need to
+  // decide how to pass arbitrary observables through Population without it
+  // needing to include specific model headers.
+  // measureObservable(...)
 };
 
 #endif  // MODEL_HPP
