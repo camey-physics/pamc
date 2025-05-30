@@ -55,6 +55,7 @@ TEST(IsingModelTest, CopyState) {
   for (int i = 0; i < num_spins; ++i) {
     EXPECT_EQ(model.getSpin(i), model2.getSpin(i));
   }
+  gsl_rng_free(r);
 }
 
 TEST(IsingModelTest, CreateNeighborTable) {
@@ -143,6 +144,8 @@ TEST(IsingModelTest, MetropolisSweep) {
 
   EXPECT_NEAR(avg_energy, -3 * J * tanh(beta * J), 5e-2);
   EXPECT_NEAR(avg_mag, 0.0, 5e-2);
+
+  gsl_rng_free(r);
 }
 
 // Check that the heat bath algorithm obtains expected high temperature results
@@ -177,6 +180,7 @@ TEST(IsingModelTest, HeatBathSweep) {
 
   EXPECT_NEAR(avg_energy, -3 * J * tanh(beta * J), 5e-2);
   EXPECT_NEAR(avg_mag, 0.0, 5e-2);
+  gsl_rng_free(r);
 }
 
 // Check that the Wolff algorithm obtains expected low temperature results
@@ -210,4 +214,5 @@ TEST(IsingModelTest, WolffSweep) {
 
   EXPECT_NEAR(avg_energy, -3, 5e-2);
   EXPECT_NEAR(avg_mag, 1.0, 5e-2);
+  gsl_rng_free(r);
 }
