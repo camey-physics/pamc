@@ -12,8 +12,8 @@ class Population {
  public:
   Population(int pop_size, const gsl_rng_type* T, const SharedModelData<ModelType>& shared_data);
   ~Population();
-   
-  void equilibrate(double beta, int numSweeps, typename ModelType::UpdateMethod method);
+  template <typename... Args>
+  void equilibrate(double beta, int num_sweeps, typename ModelType::UpdateMethod method, Args&&... extra_args);
   void resample(double new_beta);
   double suggestNextBeta();
   double measureEnergy();
@@ -29,8 +29,6 @@ class Population {
 
   gsl_rng* r_ = nullptr;
 };
-
-#include <Population.hpp>
 
 template <typename ModelType>
 Population<ModelType>::Population(int pop_size, const gsl_rng_type* T, const SharedModelData<ModelType>& shared_data)
@@ -50,9 +48,12 @@ Population<ModelType>::~Population() {
 }
 
 template <typename ModelType>
-void Population<ModelType>::equilibrate(double beta, int numSweeps, typename ModelType::UpdateMethod method) {
-
+template <typename... Args>
+void Population<ModelType>::equilibrate(double beta, int num_sweeps, typename ModelType::UpdateMethod method, Args&&... extra_args) {
+  beta_ = beta;
+  for (int i = 0; i < pop_size_; ++i) {
+    population_[i].updateSweep(numSweeps, method, beta, std::forward<Args>(extra_args)...);
+  }
 }
-
 
 #endif // POPULATION_HPP
