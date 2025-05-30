@@ -58,6 +58,30 @@ TEST(IsingModelTest, CopyState) {
   gsl_rng_free(r);
 }
 
+TEST(IsingModelTest, GetState) {
+  const int L = 10;
+  const int num_spins = L * L * L;
+  const int num_neighbors = 6;
+  double J = 1;
+
+  std::vector<int> neighbor_table = initializeNeighborTable3D(L);
+  std::vector<double> bond_table(num_spins * num_neighbors, J);
+
+  SharedModelData<IsingModel> data(L, num_spins, num_neighbors,
+                                   neighbor_table.data(), bond_table.data());
+  IsingModel model(data);
+
+  gsl_rng* r = gsl_rng_alloc(gsl_rng_mt19937);
+  gsl_rng_set(r, 42);
+  model.initializeState(r);
+  std::vector<int> state = model.getState();
+
+  for (int i = 0; i < num_spins; ++i) {
+    EXPECT_EQ(model.getSpin(i), state[i]);
+  }
+  gsl_rng_free(r);
+}
+
 TEST(IsingModelTest, CreateNeighborTable) {
   int L = 4;
   std::vector<int> table = initializeNeighborTable3D(L);
