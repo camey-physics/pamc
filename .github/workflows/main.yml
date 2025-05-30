@@ -23,4 +23,8 @@ jobs:
       run: cmake --build build  # Build the project
 
     - name: Run Tests
-      run: cd build && ctest  # Run the tests
+      run: cd build && ctest --output-on-failure
+
+    - name: Show detailed test output
+      if: failure()
+      run: cat build/Testing/Temporary/LastTest.log || echo "No LastTest.log found"
