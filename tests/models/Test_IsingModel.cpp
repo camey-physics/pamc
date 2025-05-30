@@ -76,6 +76,8 @@ TEST(IsingModelTest, GetState) {
   model.initializeState(r);
   std::vector<int> state = model.getState();
 
+  EXPECT_EQ(num_spins, state.size());
+  
   for (int i = 0; i < num_spins; ++i) {
     EXPECT_EQ(model.getSpin(i), state[i]);
   }
