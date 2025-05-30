@@ -47,6 +47,7 @@ Population<ModelType>::~Population() {
   gsl_rng_free(r_);
 }
 
+// Use a variadic template in order to pass additional arguments to the default arguments defined in Model.hpp
 template <typename ModelType>
 template <typename... Args>
 void Population<ModelType>::equilibrate(double beta, int num_sweeps, typename ModelType::UpdateMethod method, Args&&... extra_args) {
