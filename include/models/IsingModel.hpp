@@ -34,6 +34,8 @@ class IsingModel : public Model {
   void updateSweep(int num_sweeps, double beta, gsl_rng* r, UpdateMethod method,
                    bool sequential = false);
 
+  std::vector<int> getState();
+
   // Helper methods for unit testing IsingModel class
   void setSpin(int i, int val);
   int getSpin(int i) const;

@@ -23,13 +23,20 @@ class Model {
   // Optional tag for method-specific updates (e.g. Metropolis, Heat Bath).
   enum class UpdateMethod {};
 
+  // Generic method to getState is duck typed because the return type
+  // depends on the specific model. Should take no arguments, e.g.
+  // std::vector<int> getState();
+
   // Optional tag for model-specific observables (e.g. Energy, Magnetization,
   // Overlap).
-  enum class Observable {};
+  // enum class Observable {};
 
   // Generic method to measure observables with generic input. Still need to
   // decide how to pass arbitrary observables through Population without it
   // needing to include specific model headers.
+  // Currently considering duck typing so that Population expects a
+  // measureObservable method with argument ModelType::observable, which is
+  // only defined within the derived Model classes.
   // measureObservable(...)
 };
 
