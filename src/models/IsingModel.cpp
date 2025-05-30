@@ -14,7 +14,7 @@ IsingModel::IsingModel(const SharedModelData<IsingModel>& shared_data)
       bond_table_(shared_data.bond_table) {
   assert(num_neighbors_ % 2 == 0 &&
          "Neighbor table must use even pairing (+/- directions)");
-  spins_ = new int8_t[num_spins_];
+  spins_ = new int[num_spins_];
   for (int i = 0; i < num_spins_; ++i) {
     spins_[i] = 1;
   }
@@ -114,7 +114,7 @@ void IsingModel::setSpin(int i, int val) {
   spins_[i] = val;
 }
 
-int8_t IsingModel::getSpin(int i) const {
+int IsingModel::getSpin(int i) const {
   if (i < 0 || i >= num_spins_) {
     throw std::out_of_range("Index out of range");
   }

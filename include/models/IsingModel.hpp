@@ -36,7 +36,7 @@ class IsingModel : public Model {
 
   // Helper methods for unit testing IsingModel class
   void setSpin(int i, int val);
-  int8_t getSpin(int i) const;
+  int getSpin(int i) const;
 
  private:
   // Shared model data, immutable
@@ -47,7 +47,7 @@ class IsingModel : public Model {
   const double* bond_table_;
 
   // Owned data
-  int8_t* spins_;
+  int* spins_;
 
   // Monte Carlo update methods
   void metropolis(gsl_rng* r, double beta, int i);
