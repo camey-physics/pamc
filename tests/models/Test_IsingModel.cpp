@@ -109,7 +109,7 @@ TEST(IsingModelTest, NeighborTable) {
   }
 }
 
-TEST(IsingModelTest, CalcEnergy) {
+TEST(IsingModelTest, MeasureEnergy) {
   const int L = 5;
   const int num_spins = L * L * L;
   const int num_neighbors = 6;
@@ -121,21 +121,21 @@ TEST(IsingModelTest, CalcEnergy) {
   SharedModelData<IsingModel> data(L, num_spins, num_neighbors,
                                    neighbor_table.data(), bond_table.data());
 
-  // Calculate energy of all spins up configuration
+  // Measure energy of all spins up configuration
   IsingModel model(data);
-  EXPECT_NEAR(model.calcEnergy(), -3.0, 1e-10);
-  // Calculate energy with one spin down
+  EXPECT_NEAR(model.measureEnergy(), -3.0, 1e-10);
+  // Measure energy with one spin down
   int ind = index3D(1, 0, 0, L);
   model.setSpin(ind, -1);
-  EXPECT_NEAR(model.calcEnergy(), -3.0 + 12.0 / num_spins, 1e-10);
-  // Calculate energy with neighboring spin down
+  EXPECT_NEAR(model.measureEnergy(), -3.0 + 12.0 / num_spins, 1e-10);
+  // Measure energy with neighboring spin down
   ind = index3D(0, 0, 0, L);
   model.setSpin(ind, -1);
-  EXPECT_NEAR(model.calcEnergy(), -3.0 + 20.0 / num_spins, 1e-10);
-  // Calculate energy with second neighboring spin down
+  EXPECT_NEAR(model.measureEnergy(), -3.0 + 20.0 / num_spins, 1e-10);
+  // Measure energy with second neighboring spin down
   ind = index3D(0, L - 1, 0, L);
   model.setSpin(ind, -1);
-  EXPECT_NEAR(model.calcEnergy(), -3.0 + 28.0 / num_spins, 1e-10);
+  EXPECT_NEAR(model.measureEnergy(), -3.0 + 28.0 / num_spins, 1e-10);
 }
 
 // Check that the metropolis algorithm obtains expected high temperature results
@@ -162,8 +162,8 @@ TEST(IsingModelTest, MetropolisSweep) {
   for (int i = 0; i < num_samples; ++i) {
     model.updateSweep(1000, beta, r, IsingModel::UpdateMethod::metropolis,
                       true);
-    avg_energy += model.calcEnergy();
-    avg_mag += model.calcMagnetization();
+    avg_energy += model.measureEnergy();
+    avg_mag += model.measureMagnetization();
   }
   avg_energy /= num_samples;
   avg_mag /= num_samples;
@@ -198,8 +198,8 @@ TEST(IsingModelTest, HeatBathSweep) {
   for (int i = 0; i < num_samples; ++i) {
     model.updateSweep(1000, beta, r, IsingModel::UpdateMethod::metropolis,
                       true);
-    avg_energy += model.calcEnergy();
-    avg_mag += model.calcMagnetization();
+    avg_energy += model.measureEnergy();
+    avg_mag += model.measureMagnetization();
   }
   avg_energy /= num_samples;
   avg_mag /= num_samples;
@@ -232,8 +232,8 @@ TEST(IsingModelTest, WolffSweep) {
   double avg_energy = 0.0, avg_mag = 0.0;
   for (int i = 0; i < num_samples; ++i) {
     model.updateSweep(10, beta, r, IsingModel::UpdateMethod::wolff, false);
-    avg_energy += model.calcEnergy();
-    avg_mag += abs(model.calcMagnetization());
+    avg_energy += model.measureEnergy();
+    avg_mag += abs(model.measureMagnetization());
   }
   avg_energy /= num_samples;
   avg_mag /= num_samples;
