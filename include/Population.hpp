@@ -15,6 +15,7 @@
 
 #include <gsl/gsl_rng.h>
 #include <vector>
+#include <cmath>
 
 template <typename ModelType>
 class Population {
@@ -39,25 +40,32 @@ class Population {
 
  private:
   double beta_ = 0.0;
+  double betaF = 0.0;
   int pop_size_ = 0;
+  int nom_pop_size_ = 0;
+  int max_pop_size_ = 0;
   std::vector<ModelType> population_;
-  std::vector<double> energy_;
-  std::vector<double> weight_;
-  bool energy_current_ = false;
+  std::vector<double> energies_;
+  std::vector<double> weights_;
+  bool energies_current_ = false;
   const SharedModelData<ModelType>& shared_data_;
 
   gsl_rng* r_ = nullptr;
+
+  // Helper functions
+  void resizePopulationStorage(int new_size);
+  inline int stochastic_round(double tau, gsl_rng* r);
 };
 
 template <typename ModelType>
 Population<ModelType>::Population(int pop_size, const gsl_rng_type* T, const SharedModelData<ModelType>& shared_data)
     : beta_(0.0),
       pop_size_(pop_size),
-      population_(pop_size),
-      energy_(pop_size),
-      weight_(pop_size),
+      nom_pop_size_(pop_size),
       r_(gsl_rng_alloc(T)),
       shared_data_(shared_data) {
+  max_pop_size_ = static_cast<int>(nom_pop_size_ + 10 * std::sqrt(nom_pop_size_));
+  resizePopulationStorage(pop_size);
   for (int i = 0; i < pop_size_; ++i) {
     population_[i].initializeState(r_, shared_data);
   }
@@ -76,25 +84,128 @@ void Population<ModelType>::equilibrate(double beta, int num_sweeps, typename Mo
   for (int i = 0; i < pop_size_; ++i) {
     population_[i].updateSweep(num_sweeps, method, beta, std::forward<Args>(extra_args)...);
   }
-  energy_current_ = false;
+  energies_current_ = false;
 }
 
 template <typename ModelType>
 void Population<ModelType>::resample(double new_beta) {
+  double delta_beta = new_beta - beta;
+  double avg_energy = measureEnergy();
 
+  // Apply energy shift to stabilize exponentials:
+  // We compute weights ∝ exp(-Δβ (E_i - ⟨E⟩)) to avoid underflow,
+  // and account for the shift in Q and betaF update.
+  for (int i = 0; i < pop_size_; ++i) {
+    weights_[i] = std::exp(-delta_beta * (energies_[i] - avg_energy));
+  }
+  double QR = std::accumulate(weights_.begin(), weights_.end(), 0.0);
+  // Requires the additional part to cancel out the shifted energy
+  betaF -= std::log(QR /pop_size_) + delta_beta *avg_energy;
+  // Now normalize weights (equal to tau_i).
+  // The shifted energy in Q and in weights cancel each other.
+  for (int i = 0; i < pop_size_; ++i) {
+    weights_[i] = nom_pop_size_ * weights_[i] / QR;
+  }
+  // Implement actual resampling here.
+
+  int total_new = 0;
+  for (int i = 0; i < pop_size_; ++i) {
+    weights_[i] = stochastic_round(weights_[i], r_);
+    total_new += static_cast<int>(weights_[i]);
+  }
+
+  // Make space if needed
+  if (total_new > population_.capacity()) {
+    resizePopulationStorage(total_new);
+  }
+
+  int copy_to = 0;
+  // Find the first zero-copy slot
+  while (copy_to < pop_size_ && weights_[copy_to] > 0) {
+    ++copy_to;
+  }
+
+  int copy_from = 0;
+  while (copy_from < pop_size_) {
+    int& count = weights_[copy_from];
+
+    if (count <= 1) {
+      ++copy_from;
+      continue;
+    }
+
+    // Perform a copy
+    population_[copy_to].copyStateFrom(population_[copy_from]);
+    energies_[copy_to] = energies_[copy_from];
+    --count;
+
+    // Move copy_to to next available zero slot
+    do {
+      ++copy_to;
+    } while (copy_to < pop_size_ && weights_[copy_to] > 0);
+
+    if (copy_to >= pop_size_) break;
+  }
+
+  if (total_new < pop_size_) {
+    copy_to = 0;
+    copy_from = pop_size_ - 1;
+
+    while (copy_to < copy_from) {
+      // Find next zero-copy slot
+      while (copy_to < copy_from && weights_[copy_to] > 0) ++copy_to;
+
+      // Find next copyable replica from the end
+      while (copy_to < copy_from && weights_[copy_from] == 0) --copy_from;
+
+      if (copy_to < copy_from) {
+        population_[copy_to].copyStateFrom(population_[copy_from]);
+        energies_[copy_to] = energies_[copy_from];
+        ++copy_to;
+        --copy_from;
+      }
+    }
+
+    population_.resize(total_new);
+    energies_.resize(total_new);
+    weights_.resize(total_new);
+    pop_size_ = total_new;
+  }
 }
 
 template <typename ModelType>
 double Population<ModelType>::measureEnergy(bool force) {
-  if (!energy_current_ || force) {
+  if (!energies_current_ || force) {
     double total_energy = 0.0;
     for (int i = 0; i < pop_size_; ++i) {
-      energy_[i] = population_[i].measureEnergy();
-      total_energy += energy_[i];
+      energies_[i] = population_[i].measureEnergy();
+      total_energy += energies_[i];
     }
-    energy_current_ = true;
+    energies_current_ = true;
     return total_energy /pop_size_;
   }
+}
+
+template <typename ModelType>
+void Population<ModelType>::resizePopulationStorage(int new_size) {
+  if (new_size > max_pop_size_) {
+    throw std::runtime_error("Exceeded maximum allowed population size.");
+  }
+  else if (new_size > population_.capacity()) {
+    int reserve_size = static_cast<int>(new_size + 5 * std::sqrt(static_cast<double>(new_size)));
+    population_.reserve(reserve_size);
+    energies_.reserve(reserve_size);
+    weights_.reserve(reserve_size);
+  } 
+  population_.resize(new_size);
+  energies_.resize(new_size);
+  weights_.resize(new_size);
+}
+
+inline int stochastic_round(double tau, gsl_rng* r) {
+  int base = static_cast<int>(std::floor(tau));
+  double prob = tau - base;
+  return (gsl_rng_uniform(r) < prob) ? base + 1 : base;
 }
 
 #endif // POPULATION_HPP
