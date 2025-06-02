@@ -26,7 +26,7 @@ class Population {
   void resample(double new_beta);
   // Keep beta schedule simple for now.
   double suggestNextBeta() { return beta_ + 0.05; }
-  double measureEnergy();
+  double measureEnergy(bool force = false);
 
   // Not enforced to be in derived models via Model.hpp, but required for Population.
   // void measureObservable(typename ModelType::Observable);
@@ -41,6 +41,9 @@ class Population {
   double beta_ = 0.0;
   int pop_size_ = 0;
   std::vector<ModelType> population_;
+  std::vector<double> energy_;
+  std::vector<double> weight_;
+  bool energy_current_ = false;
   const SharedModelData<ModelType>& shared_data_;
 
   gsl_rng* r_ = nullptr;
@@ -51,6 +54,8 @@ Population<ModelType>::Population(int pop_size, const gsl_rng_type* T, const Sha
     : beta_(0.0),
       pop_size_(pop_size),
       population_(pop_size),
+      energy_(pop_size),
+      weight_(pop_size),
       r_(gsl_rng_alloc(T)),
       shared_data_(shared_data) {
   for (int i = 0; i < pop_size_; ++i) {
@@ -71,15 +76,25 @@ void Population<ModelType>::equilibrate(double beta, int num_sweeps, typename Mo
   for (int i = 0; i < pop_size_; ++i) {
     population_[i].updateSweep(num_sweeps, method, beta, std::forward<Args>(extra_args)...);
   }
+  energy_current_ = false;
 }
 
 template <typename ModelType>
-double Population<ModelType>::measureEnergy() {
-  double energy = 0.0;
-  for (int i = 0; i < pop_size_; ++i) {
-    energy += population_[i].measureEnergy();
+void Population<ModelType>::resample(double new_beta) {
+
+}
+
+template <typename ModelType>
+double Population<ModelType>::measureEnergy(bool force) {
+  if (!energy_current_ || force) {
+    double total_energy = 0.0;
+    for (int i = 0; i < pop_size_; ++i) {
+      energy_[i] = population_[i].measureEnergy();
+      total_energy += energy_[i];
+    }
+    energy_current_ = true;
+    return total_energy /pop_size_;
   }
-  return energy /pop_size_;
 }
 
 #endif // POPULATION_HPP
