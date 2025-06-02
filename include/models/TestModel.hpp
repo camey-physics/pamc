@@ -3,41 +3,60 @@
 
 #include <gsl/gsl_rng.h>
 
-#include <memory>
 #include <stdexcept>
-#include <vector>
-
 #include "Model.hpp"
 #include "SharedModelData.hpp"
 
 class TestModel {
  public:
-  enum class UpdateMethod { FAKE };
+  enum class UpdateMethod { FAKE_LOW, FAKE_MID, FAKE_HIGH };
 
   void initializeState(gsl_rng* r, const SharedModelData<TestModel>&) {
     state_initialized = true;
+    energy_ = gsl_rng_uniform(r);  // [0,1)
   }
 
-  void updateSweep(int num_sweeps, UpdateMethod method, double beta) {
-    last_num_sweeps = num_sweeps;
-    last_beta = beta;
+  void updateSweep(int num_sweeps, UpdateMethod method, double /*beta*/, gsl_rng* r) {
     for (int i = 0; i < num_sweeps; ++i) {
-      updates_called += 1;
+      updates_called_ += 1;
+    }
+
+    switch (method) {
+      case UpdateMethod::FAKE_LOW:
+        energy_ = gsl_rng_uniform(r);             // [0,1)
+        break;
+      case UpdateMethod::FAKE_MID:
+        energy_ = 1.0 + gsl_rng_uniform(r);       // [1,2)
+        break;
+      case UpdateMethod::FAKE_HIGH:
+        energy_ = 2.0 + gsl_rng_uniform(r);       // [2,3)
+        break;
+      default:
+        throw std::invalid_argument("Unknown update method in TestModel");
     }
   }
 
   double measureEnergy() const {
-    return fixed_energy;
+    return energy_;
   }
 
-  int getState() const { return updates_called; }
+  double getState() const {
+    return energy_;
+  }
 
-  // Optional: hooks to verify state
+  void copyStateFrom(const TestModel& other) {
+    energy_ = other.energy_;
+    updates_called_ = other.updates_called_;
+    state_initialized = other.state_initialized;
+  }
+
+  void setState(double energy) { energy_ = energy; }
+
   bool state_initialized = false;
-  int updates_called = 0;
-  int last_num_sweeps = 0;
-  double last_beta = 0.0;
-  double fixed_energy = 42.0;  // default predictable result
+  int updates_called_ = 0;
+
+ private:
+  double energy_ = 0.0;
 };
 
-#endif // TEST_MODEL_HPP
+#endif  // TEST_MODEL_HPP
