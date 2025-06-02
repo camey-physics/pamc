@@ -4,40 +4,55 @@
 #include <gsl/gsl_rng.h>
 
 // Abstract base class for all Monte Carlo models used in PAMC.
+// Model is a polymorphic base for all models used in Population.
+// SharedModelData<ModelType> is templated and not linked to Model directly;
+// each derived model defines how it uses its own SharedModelData<ModelType>.
+
+// Population<ModelType> assumes that ModelType defines the following methods:
+//
+//   void initializeState(gsl_rng*, const SharedModelData<ModelType>&);
+//   void updateSweep(int, UpdateMethod, double, gsl_rng*, bool [, ...]);
+//   auto getState() const;         // return type may vary
+//
+// These methods are duck-typed: they are not enforced via Model.hpp,
+// but are required for Population to compile and function correctly.
+
 class Model {
  public:
   virtual ~Model() = default;
 
-  // Randomizes internal state using provided RNG.
+  // Randomizes internal state using the provided RNG.
+  // This base method must be overloaded in each derived class.
+  // Models must also define a duck-typed overload that takes
+  // SharedModelData<ModelType>&.
   virtual void initializeState(gsl_rng* r) = 0;
 
-  // Copies full model state from another instance.
+  // Copies the full model state from another instance.
   virtual void copyStateFrom(const Model& other) = 0;
 
   // Calculates and returns the current energy of the model.
   virtual double calcEnergy() const = 0;
 
   // Applies update sweeps with given beta and RNG.
+  // Derived models may overload this to accept additional arguments.
   virtual void updateSweep(int num_sweeps, double beta, gsl_rng* r) = 0;
 
-  // Optional tag for method-specific updates (e.g. Metropolis, Heat Bath).
+  // Optional tag for method-specific updates (e.g., Metropolis, Heat Bath).
   enum class UpdateMethod {};
 
-  // Generic method to getState is duck typed because the return type
-  // depends on the specific model. Should take no arguments, e.g.
-  // std::vector<int> getState();
+  // Duck-typed method: must be implemented in each model class and must take no
+  // arguments.
+  //   auto getState() const;
+  // Used by Population to extract the state of a model instance.
+  // The return type may vary across models.
 
-  // Optional tag for model-specific observables (e.g. Energy, Magnetization,
-  // Overlap).
+  // Optional tag for model-specific observables (e.g., Energy, Magnetization).
   // enum class Observable {};
 
-  // Generic method to measure observables with generic input. Still need to
-  // decide how to pass arbitrary observables through Population without it
-  // needing to include specific model headers.
-  // Currently considering duck typing so that Population expects a
-  // measureObservable method with argument ModelType::observable, which is
-  // only defined within the derived Model classes.
-  // measureObservable(...)
+  // Generic observable measurement interface.
+  // Still under design—will likely use duck typing:
+  // Population expects a method measureObservable(...) where the argument
+  // is ModelType::Observable (defined only in derived classes).
 };
 
 #endif  // MODEL_HPP
