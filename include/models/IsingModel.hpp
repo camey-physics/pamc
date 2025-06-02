@@ -23,8 +23,8 @@ class IsingModel : public Model {
   enum class Observable { energy, magnetization };
 
   // IsingModel observable methods
-  double calcEnergy() const override;
-  double calcMagnetization() const;
+  double measureEnergy() const override;
+  double measureMagnetization() const;
 
   // Monte Carlo sweep methods.
   // By default uses metropolis updates on randomly selected spins

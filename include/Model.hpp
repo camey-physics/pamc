@@ -31,7 +31,7 @@ class Model {
   virtual void copyStateFrom(const Model& other) = 0;
 
   // Calculates and returns the current energy of the model.
-  virtual double calcEnergy() const = 0;
+  virtual double measureEnergy() const = 0;
 
   // Applies update sweeps with given beta and RNG.
   // Derived models may overload this to accept additional arguments.

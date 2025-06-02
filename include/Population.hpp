@@ -24,7 +24,8 @@ class Population {
   template <typename... Args>
   void equilibrate(double beta, int num_sweeps, typename ModelType::UpdateMethod method, Args&&... extra_args);
   void resample(double new_beta);
-  double suggestNextBeta();
+  // Keep beta schedule simple for now.
+  double suggestNextBeta() { return beta_ + 0.05; }
   double measureEnergy();
 
   // Not enforced to be in derived models via Model.hpp, but required for Population.
@@ -70,6 +71,15 @@ void Population<ModelType>::equilibrate(double beta, int num_sweeps, typename Mo
   for (int i = 0; i < pop_size_; ++i) {
     population_[i].updateSweep(num_sweeps, method, beta, std::forward<Args>(extra_args)...);
   }
+}
+
+template <typename ModelType>
+double Population<ModelType>::measureEnergy() {
+  double energy = 0.0;
+  for (int i = 0; i < pop_size_; ++i) {
+    energy += population_[i].measureEnergy();
+  }
+  return energy /pop_size_;
 }
 
 #endif // POPULATION_HPP

@@ -40,7 +40,7 @@ void IsingModel::copyStateFrom(const Model& other) {
   }
 }
 
-double IsingModel::calcEnergy() const {
+double IsingModel::measureEnergy() const {
   double energy = 0.0;
   for (int i = 0; i < num_spins_; ++i) {
     // Skip every second neighbor to avoid double-counting bonds.
@@ -53,7 +53,7 @@ double IsingModel::calcEnergy() const {
   return energy / num_spins_;
 }
 
-double IsingModel::calcMagnetization() const {
+double IsingModel::measureMagnetization() const {
   int mag = 0;
   for (int i = 0; i < num_spins_; ++i) {
     mag += spins_[i];
