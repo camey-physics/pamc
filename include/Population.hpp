@@ -10,34 +10,44 @@
 // These methods are duck-typed: they are not enforced via Model.hpp,
 // but are required for Population to compile and function correctly.
 
+#include <gsl/gsl_rng.h>
+
+#include <cmath>
+#include <numeric>
+#include <vector>
+
 #include "Model.hpp"
 #include "SharedModelData.hpp"
-
-#include <gsl/gsl_rng.h>
-#include <vector>
-#include <numeric>
-#include <cmath>
 
 template <typename ModelType>
 class Population {
  public:
-  Population(unsigned int pop_size, const gsl_rng_type* T, const SharedModelData<ModelType>& shared_data);
+  Population(unsigned int pop_size, const gsl_rng_type* T,
+             const SharedModelData<ModelType>& shared_data);
   ~Population();
   template <typename... Args>
-  void equilibrate(double beta, int num_sweeps, typename ModelType::UpdateMethod method, Args&&... extra_args);
+  void equilibrate(double beta, int num_sweeps,
+                   typename ModelType::UpdateMethod method,
+                   Args&&... extra_args);
   void resample(double new_beta);
   // Keep beta schedule simple for now.
   double suggestNextBeta() { return beta_ + 0.05; }
   double measureEnergy(bool force = false);
 
-  // Not enforced to be in derived models via Model.hpp, but required for Population.
-  // void measureObservable(typename ModelType::Observable);
+  // Not enforced to be in derived models via Model.hpp, but required for
+  // Population. void measureObservable(typename ModelType::Observable);
 
   // population_[i].getState() is duck typed and not enforced by Model.hpp.
   auto getState(int i) const { return population_[i].getState(); }
+  int const getBeta() const { return beta_; }
+  double const getDeltaBetaF() const { return delta_betaF; }
+  int const getPopSize() const { return pop_size_; }
 
-  // Returns a const reference to the population of models for direct interaction when needed. Not intended to be used in normal circumstances; for unit testing and debugging.
-  const std::vector<ModelType>& getModels() const { return population_; }
+  // Returns a const reference to the population of models for direct
+  // interaction when needed. Not intended to be used in normal circumstances;
+  // for unit testing and debugging.
+  // const std::vector<ModelType>& getModels() const { return population_; }
+  std::vector<ModelType>& getModels() { return population_; }
 
  private:
   double beta_ = 0.0;
@@ -63,13 +73,15 @@ class Population {
 };
 
 template <typename ModelType>
-Population<ModelType>::Population(unsigned int pop_size, const gsl_rng_type* T, const SharedModelData<ModelType>& shared_data)
+Population<ModelType>::Population(unsigned int pop_size, const gsl_rng_type* T,
+                                  const SharedModelData<ModelType>& shared_data)
     : beta_(0.0),
       pop_size_(pop_size),
       nom_pop_size_(pop_size),
       shared_data_(shared_data),
       r_(gsl_rng_alloc(T)) {
-  max_pop_size_ = static_cast<int>(nom_pop_size_ + 10 * std::sqrt(nom_pop_size_));
+  max_pop_size_ =
+      static_cast<int>(nom_pop_size_ + 10 * std::sqrt(nom_pop_size_));
   resizePopulationStorage(pop_size);
   for (unsigned int i = 0; i < pop_size_; ++i) {
     population_[i].initializeState(r_, shared_data);
@@ -81,13 +93,17 @@ Population<ModelType>::~Population() {
   gsl_rng_free(r_);
 }
 
-// Use a variadic template in order to pass additional arguments to the default arguments defined in Model.hpp
+// Use a variadic template in order to pass additional arguments to the default
+// arguments defined in Model.hpp
 template <typename ModelType>
 template <typename... Args>
-void Population<ModelType>::equilibrate(double beta, int num_sweeps, typename ModelType::UpdateMethod method, Args&&... extra_args) {
+void Population<ModelType>::equilibrate(double beta, int num_sweeps,
+                                        typename ModelType::UpdateMethod method,
+                                        Args&&... extra_args) {
   beta_ = beta;
   for (unsigned int i = 0; i < pop_size_; ++i) {
-    population_[i].updateSweep(num_sweeps, method, beta, std::forward<Args>(extra_args)...);
+    population_[i].updateSweep(num_sweeps, method, beta,
+                               std::forward<Args>(extra_args)...);
   }
   energies_current_ = false;
 }
@@ -105,7 +121,7 @@ void Population<ModelType>::resample(double new_beta) {
   }
   double QR = std::accumulate(weights_.begin(), weights_.end(), 0.0);
   // Requires the additional part to cancel out the shifted energy
-  delta_betaF_ -= std::log(QR /pop_size_) + delta_beta *avg_energy;
+  delta_betaF_ -= std::log(QR / pop_size_) + delta_beta * avg_energy;
   // Now normalize weights (equal to tau_i).
   // The shifted energy in Q and in weights cancel each other.
   for (unsigned int i = 0; i < pop_size_; ++i) {
@@ -113,7 +129,7 @@ void Population<ModelType>::resample(double new_beta) {
   }
   // Implement actual resampling here.
 
-  int total_new = 0;
+  unsigned int total_new = 0;
   for (unsigned int i = 0; i < pop_size_; ++i) {
     weights_[i] = stochastic_round(weights_[i], r_);
     total_new += static_cast<int>(weights_[i]);
@@ -124,13 +140,13 @@ void Population<ModelType>::resample(double new_beta) {
     resizePopulationStorage(total_new);
   }
 
-  int copy_to = 0;
+  unsigned int copy_to = 0;
   // Find the first zero-copy slot
   while (copy_to < pop_size_ && weights_[copy_to] > 0) {
     ++copy_to;
   }
 
-  int copy_from = 0;
+  unsigned int copy_from = 0;
   while (copy_from < pop_size_) {
     double& count = weights_[copy_from];
 
@@ -149,7 +165,8 @@ void Population<ModelType>::resample(double new_beta) {
       ++copy_to;
     } while (copy_to < pop_size_ && weights_[copy_to] > 0);
 
-    if (copy_to >= pop_size_) break;
+    if (copy_to >= pop_size_)
+      break;
   }
 
   if (total_new < pop_size_) {
@@ -186,24 +203,25 @@ double Population<ModelType>::measureEnergy(bool force) {
     }
     energies_current_ = true;
   }
-  double total_energy = std::accumulate(energies_.begin(), energies_.end(), 0.0);
-  return total_energy /pop_size_;
+  double total_energy =
+      std::accumulate(energies_.begin(), energies_.end(), 0.0);
+  return total_energy / pop_size_;
 }
 
 template <typename ModelType>
 void Population<ModelType>::resizePopulationStorage(unsigned int new_size) {
   if (new_size > max_pop_size_) {
     throw std::runtime_error("Exceeded maximum allowed population size.");
-  }
-  else if (new_size > population_.capacity()) {
-    int reserve_size = static_cast<int>(new_size + 5 * std::sqrt(static_cast<double>(new_size)));
+  } else if (new_size > population_.capacity()) {
+    int reserve_size = static_cast<int>(
+        new_size + 5 * std::sqrt(static_cast<double>(new_size)));
     population_.reserve(reserve_size);
     energies_.reserve(reserve_size);
     weights_.reserve(reserve_size);
-  } 
+  }
   population_.resize(new_size);
   energies_.resize(new_size);
   weights_.resize(new_size);
 }
 
-#endif // POPULATION_HPP
+#endif  // POPULATION_HPP
