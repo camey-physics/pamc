@@ -39,9 +39,9 @@ class Population {
 
   // population_[i].getState() is duck typed and not enforced by Model.hpp.
   auto getState(int i) const { return population_[i].getState(); }
-  int const getBeta() const { return beta_; }
-  double const getDeltaBetaF() const { return delta_betaF; }
-  int const getPopSize() const { return pop_size_; }
+  int getBeta() const { return beta_; }
+  double getDeltaBetaF() const { return delta_betaF_; }
+  int getPopSize() const { return pop_size_; }
 
   // Returns a const reference to the population of models for direct
   // interaction when needed. Not intended to be used in normal circumstances;
