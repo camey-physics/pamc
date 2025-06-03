@@ -41,7 +41,7 @@ class Population {
 
  private:
   double beta_ = 0.0;
-  double betaF = 0.0;
+  double delta_betaF_ = 0.0;
   unsigned int pop_size_ = 0;
   unsigned int nom_pop_size_ = 0;
   unsigned int max_pop_size_ = 0;
@@ -55,7 +55,11 @@ class Population {
 
   // Helper functions
   void resizePopulationStorage(unsigned int new_size);
-  inline int stochastic_round(double tau, gsl_rng* r);
+  inline int stochastic_round(double tau, gsl_rng* r) {
+    int base = static_cast<int>(std::floor(tau));
+    double prob = tau - base;
+    return (gsl_rng_uniform(r) < prob) ? base + 1 : base;
+  }
 };
 
 template <typename ModelType>
@@ -101,7 +105,7 @@ void Population<ModelType>::resample(double new_beta) {
   }
   double QR = std::accumulate(weights_.begin(), weights_.end(), 0.0);
   // Requires the additional part to cancel out the shifted energy
-  betaF -= std::log(QR /pop_size_) + delta_beta *avg_energy;
+  delta_betaF_ -= std::log(QR /pop_size_) + delta_beta *avg_energy;
   // Now normalize weights (equal to tau_i).
   // The shifted energy in Q and in weights cancel each other.
   for (unsigned int i = 0; i < pop_size_; ++i) {
@@ -200,12 +204,6 @@ void Population<ModelType>::resizePopulationStorage(unsigned int new_size) {
   population_.resize(new_size);
   energies_.resize(new_size);
   weights_.resize(new_size);
-}
-
-inline int stochastic_round(double tau, gsl_rng* r) {
-  int base = static_cast<int>(std::floor(tau));
-  double prob = tau - base;
-  return (gsl_rng_uniform(r) < prob) ? base + 1 : base;
 }
 
 #endif // POPULATION_HPP
