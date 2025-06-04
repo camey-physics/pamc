@@ -37,6 +37,8 @@ void IsingModel::copyStateFrom(const Model& other) {
          "Number of spins must match!");
   for (int i = 0; i < num_spins_; ++i) {
     this->spins_[i] = isingOther.spins_[i];
+    this->family_ = isingOther.family_;
+    this->parent_ = isingOther.parent_;
   }
 }
 

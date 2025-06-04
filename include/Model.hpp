@@ -40,6 +40,18 @@ class Model {
   // Optional tag for method-specific updates (e.g., Metropolis, Heat Bath).
   enum class UpdateMethod {};
 
+  // Families can only be set once and is inherited via copyStateFrom
+  void setFamily(int family) {
+    if (family_ != -1) {
+      throw std::logic_error("family_ already set");
+    }
+    family_ = family;
+  }
+  void setParent(int parent) { parent_ = parent; }
+
+  int getFamily() const { return family_; }
+  int getParent() const { return parent_; }
+
   // Duck-typed method: must be implemented in each model class and must take no
   // arguments.
   //   auto getState() const;
@@ -53,6 +65,9 @@ class Model {
   // Still under design—will likely use duck typing:
   // Population expects a method measureObservable(...) where the argument
   // is ModelType::Observable (defined only in derived classes).
+  private:
+    int family_ = -1;
+    int parent_ = -1;
 };
 
 #endif  // MODEL_HPP

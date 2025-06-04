@@ -36,6 +36,18 @@ class IsingModel : public Model {
 
   std::vector<int> getState();
 
+  // Families can only be set once and is inherited via copyStateFrom
+  void setFamily(int family) {
+    if (family_ != -1) {
+      throw std::logic_error("family_ already set");
+    }
+    family_ = family;
+  }
+  void setParent(int parent) { parent_ = parent; }
+
+  int getFamily() const { return family_; }
+  int getParent() const { return parent_; }
+
   // Helper methods for unit testing IsingModel class
   void setSpin(int i, int val);
   int getSpin(int i) const;
@@ -47,6 +59,8 @@ class IsingModel : public Model {
   const int system_size_;
   const int* neighbor_table_;
   const double* bond_table_;
+  int family_ = -1;
+  int parent_ = -1;
 
   // Owned data
   int* spins_;
