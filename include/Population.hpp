@@ -94,6 +94,8 @@ Population<ModelType>::Population(int pop_size, const gsl_rng_type* T,
   resizePopulationStorage(pop_size);
   for (int i = 0; i < pop_size_; ++i) {
     population_[i].initializeState(r_, shared_data);
+    population_[i].setFamily(i);
+    population_[i].setParent(i);
   }
 }
 
@@ -126,6 +128,12 @@ void Population<ModelType>::resample(double new_beta, gsl_rng* r_override) {
   double avg_energy = measureEnergy();
   double QR = 0.0;
   int old_pop_size = pop_size_;
+
+  // First reset the parents_ variable to the replica's index.
+  // This ensures that the replicated models inherit the parents' index.
+  for (int i = 0; i < pop_size_; ++i) {
+    population_[i].setParent(i);
+  }
 
   // This function calculates normalized weights (held in weights_) 
   // using a shifted energy for numerical stability. It also updates QR,
