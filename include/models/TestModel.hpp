@@ -48,15 +48,19 @@ class TestModel {
     energy_ = other.energy_;
     updates_called_ = other.updates_called_;
     state_initialized = other.state_initialized;
+    family_ = other.family_;
   }
 
   void setState(double energy) { energy_ = energy; }
+  void setFamily(int family) { family_ = family; }
+  int getFamily() const { return family_; }
 
   bool state_initialized = false;
   int updates_called_ = 0;
 
  private:
   double energy_ = 0.0;
+  int family_ = 0;
 };
 
 #endif  // TEST_MODEL_HPP
