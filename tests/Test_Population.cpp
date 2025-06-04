@@ -10,18 +10,18 @@ class PopulationTestModelTest : public ::testing::Test {
  protected:
   void SetUp() override {
     gsl_rng_env_setup();
-    rng_ = gsl_rng_alloc(gsl_rng_taus);
+    rng_ = gsl_rng_alloc(gsl_rng_mt19937);
 
     pop_size = 10;
     shared_data = SharedModelData<TestModel>{};
-    pop = std::make_unique<Population<TestModel>>(pop_size, gsl_rng_taus, shared_data);
+    pop = std::make_unique<Population<TestModel>>(pop_size, gsl_rng_mt19937, shared_data);
   }
 
   void TearDown() override {
     gsl_rng_free(rng_);
   }
 
-  unsigned int pop_size;
+  int pop_size;
   gsl_rng* rng_ = nullptr;
   SharedModelData<TestModel> shared_data;
   std::unique_ptr<Population<TestModel>> pop;
@@ -30,7 +30,7 @@ class PopulationTestModelTest : public ::testing::Test {
 TEST_F(PopulationTestModelTest, EquilibrateWithFakeMidYieldsEnergyInExpectedRange) {
   pop->equilibrate(1.0, 3, TestModel::UpdateMethod::FAKE_MID, rng_);
 
-  for (unsigned int i = 0; i < pop_size; ++i) {
+  for (int i = 0; i < pop_size; ++i) {
     double e = pop->getState(i);
     EXPECT_GE(e, 1.0);
     EXPECT_LT(e, 2.0);
@@ -80,7 +80,7 @@ TEST_F(PopulationTestModelTest, ResampleWithMultipleEnergiesCalculateTau) {
     pop = std::make_unique<Population<TestModel>>(pop_size, gsl_rng_taus, shared_data);
     pop->setRngSeed(1001+trial);
     std::vector<TestModel>& models = pop->getModels();
-    for (unsigned int i = 0; i < pop_size; ++i) {
+    for (int i = 0; i < pop_size; ++i) {
       models[i].setState(1 + 0.1 *i);
       models[i].setFamily(i);
     }
@@ -88,9 +88,8 @@ TEST_F(PopulationTestModelTest, ResampleWithMultipleEnergiesCalculateTau) {
     models = pop->getModels();
     avg_pop_size += pop->getPopSize();
     for (int i = 0; i < pop->getPopSize(); ++i) {
-      double energy = models[i].getState();
       EXPECT_EQ(pop->getPopSize(), models.size());
-      unsigned int ind = models[i].getFamily();
+      int ind = models[i].getFamily();
       n[ind] += 1;
     }
   }
