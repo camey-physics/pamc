@@ -23,14 +23,14 @@
 template <typename ModelType>
 class Population {
  public:
-  Population(unsigned int pop_size, const gsl_rng_type* T,
+  Population(int pop_size, const gsl_rng_type* T,
              const SharedModelData<ModelType>& shared_data);
   ~Population();
   template <typename... Args>
   void equilibrate(double beta, int num_sweeps,
                    typename ModelType::UpdateMethod method,
                    Args&&... extra_args);
-  void resample(double new_beta);
+  void resample(double new_beta, gsl_rng* r_override = nullptr);
   // Keep beta schedule simple for now.
   double suggestNextBeta() { return beta_ + 0.05; }
   double measureEnergy(bool force = false);
@@ -45,7 +45,7 @@ class Population {
   int getPopSize() const { return pop_size_; }
 
   void setRngSeed(unsigned long int s) { gsl_rng_set(r_, s); }
-  void setNomPopSize(unsigned int i) { nom_pop_size_ = i; }
+  void setNomPopSize(int i) { nom_pop_size_ = i; }
 
   // Returns a const reference to the population of models for direct
   // interaction when needed. Not intended to be used in normal circumstances;
@@ -55,9 +55,9 @@ class Population {
  private:
   double beta_ = 0.0;
   double delta_betaF_ = 0.0;
-  unsigned int pop_size_ = 0;
-  unsigned int nom_pop_size_ = 0;
-  unsigned int max_pop_size_ = 0;
+  int pop_size_ = 0;
+  int nom_pop_size_ = 0;
+  int max_pop_size_ = 0;
   std::vector<ModelType> population_;
   std::vector<double> energies_;
   std::vector<double> weights_;
@@ -68,20 +68,21 @@ class Population {
   gsl_rng* r_ = nullptr;
 
   // Helper functions
-  void resizePopulationStorage(unsigned int new_size);
+  void resizePopulationStorage(int new_size);
   inline int stochastic_round(double tau, gsl_rng* r) {
     int floor = static_cast<int>(std::floor(tau));
     double prob = tau - floor;
-    return (gsl_rng_uniform(r) < prob) ? floor + 1 : floor;
+    double rng = gsl_rng_uniform(r);
+    return (rng < prob) ? floor + 1 : floor;
   }
   void computeWeights(double new_beta, double avg_energy, double& QR);
-  void computeCopyCounts(int& total_new);
+  void computeCopyCounts(int& total_new, gsl_rng* r_local);
   void forwardCopy(int old_pop_size, int new_pop_size);
-  void backfillHoles(int old_pop_size, int new_pop_size);
+  void backfillHoles(int old_pop_size);
 };
 
 template <typename ModelType>
-Population<ModelType>::Population(unsigned int pop_size, const gsl_rng_type* T,
+Population<ModelType>::Population(int pop_size, const gsl_rng_type* T,
                                   const SharedModelData<ModelType>& shared_data)
     : beta_(0.0),
       pop_size_(pop_size),
@@ -91,7 +92,7 @@ Population<ModelType>::Population(unsigned int pop_size, const gsl_rng_type* T,
   max_pop_size_ =
       static_cast<int>(nom_pop_size_ + 10 * std::sqrt(nom_pop_size_));
   resizePopulationStorage(pop_size);
-  for (unsigned int i = 0; i < pop_size_; ++i) {
+  for (int i = 0; i < pop_size_; ++i) {
     population_[i].initializeState(r_, shared_data);
   }
 }
@@ -109,7 +110,7 @@ void Population<ModelType>::equilibrate(double beta, int num_sweeps,
                                         typename ModelType::UpdateMethod method,
                                         Args&&... extra_args) {
   beta_ = beta;
-  for (unsigned int i = 0; i < pop_size_; ++i) {
+  for (int i = 0; i < pop_size_; ++i) {
     population_[i].updateSweep(num_sweeps, method, beta,
                                std::forward<Args>(extra_args)...);
   }
@@ -119,7 +120,8 @@ void Population<ModelType>::equilibrate(double beta, int num_sweeps,
 // Resample to new_beta. Internally uses local copies of old_pop_size and new_pop_size
 // to make logic clearer, since pop_size_ is updated indirectly by helpers.
 template <typename ModelType>
-void Population<ModelType>::resample(double new_beta) {
+void Population<ModelType>::resample(double new_beta, gsl_rng* r_override) {
+  gsl_rng* r_local = r_override ? r_override : r_;
   double delta_beta = new_beta - beta_;
   double avg_energy = measureEnergy();
   double QR = 0.0;
@@ -134,7 +136,7 @@ void Population<ModelType>::resample(double new_beta) {
 
   // computeCopyCounts() updates both copy_counts_ and new_pop_size
   int new_pop_size = 0;
-  computeCopyCounts(new_pop_size);
+  computeCopyCounts(new_pop_size, r_local);
 
   if (new_pop_size >= old_pop_size) {
     resizePopulationStorage(new_pop_size);
@@ -142,7 +144,7 @@ void Population<ModelType>::resample(double new_beta) {
   }
   else {
     forwardCopy(old_pop_size, new_pop_size);
-    backfillHoles(old_pop_size, new_pop_size);
+    backfillHoles(old_pop_size);
     resizePopulationStorage(new_pop_size);
   }
   pop_size_ = new_pop_size;
@@ -154,7 +156,7 @@ void Population<ModelType>::resample(double new_beta) {
 template <typename ModelType>
 double Population<ModelType>::measureEnergy(bool force) {
   if (!energies_current_ || force) {
-    for (unsigned int i = 0; i < pop_size_; ++i) {
+    for (int i = 0; i < pop_size_; ++i) {
       energies_[i] = population_[i].measureEnergy();
     }
     energies_current_ = true;
@@ -165,10 +167,10 @@ double Population<ModelType>::measureEnergy(bool force) {
 }
 
 template <typename ModelType>
-void Population<ModelType>::resizePopulationStorage(unsigned int new_size) {
+void Population<ModelType>::resizePopulationStorage(int new_size) {
   if (new_size > max_pop_size_) {
     throw std::runtime_error("Exceeded maximum allowed population size.");
-  } else if (new_size > population_.capacity()) {
+  } else if (new_size > static_cast<int>(population_.capacity())) {
     int reserve_size = static_cast<int>(
         new_size + 5 * std::sqrt(static_cast<double>(new_size)));
     population_.reserve(reserve_size);
@@ -196,23 +198,23 @@ void Population<ModelType>::computeWeights(double new_beta, double avg_energy, d
   // Apply energy shift to stabilize exponentials:
   // We compute weights ∝ exp(-Δβ (E_i - ⟨E⟩)) to avoid underflow,
   // and account for the shift in the delta betaF update.
-  for (unsigned int i = 0; i < pop_size_; ++i) {
+  for (int i = 0; i < pop_size_; ++i) {
     weights_[i] = std::exp(-delta_beta * (energies_[i] - avg_energy));
   }
   QR = std::accumulate(weights_.begin(), weights_.end(), 0.0);
 
   // Now normalize weights (equal to tau_i).
   // The shifted energy in Q and in weights cancel each other.
-  for (unsigned int i = 0; i < pop_size_; ++i) {
+  for (int i = 0; i < pop_size_; ++i) {
     weights_[i] = nom_pop_size_ * weights_[i] / QR;
   }
 }
 
 template <typename ModelType>
-void Population<ModelType>::computeCopyCounts(int& new_pop_size) {
+void Population<ModelType>::computeCopyCounts(int& new_pop_size, gsl_rng* r_local) {
   new_pop_size = 0;
-  for (unsigned int i = 0; i < pop_size_; ++i) {
-    int n = stochastic_round(weights_[i], r_);
+  for (int i = 0; i < pop_size_; ++i) {
+    int n = stochastic_round(weights_[i], r_local);
     copy_counts_[i] = n;
     new_pop_size += n;
   }
@@ -220,8 +222,8 @@ void Population<ModelType>::computeCopyCounts(int& new_pop_size) {
 
 template <typename ModelType>
 void Population<ModelType>::forwardCopy(int old_pop_size, int new_pop_size) {
-  unsigned int copy_from = 0;
-  unsigned int copy_to = 0;
+  int copy_from = 0;
+  int copy_to = 0;
 
   // Search for the first index to copy to and to copy from
   while (copy_to < new_pop_size && copy_counts_[copy_to] > 0) ++copy_to;
@@ -240,23 +242,23 @@ void Population<ModelType>::forwardCopy(int old_pop_size, int new_pop_size) {
 }
 
 template <typename ModelType>
-void Population<ModelType>::backfillHoles(int old_pop_size, int new_pop_size) {
+void Population<ModelType>::backfillHoles(int old_pop_size) {
   int copy_to = 0;
   int copy_from = old_pop_size - 1;
 
   // Move states from the back of the population to fill zero-copy slots in the front
   while (copy_to < copy_from) {
-    // Advance to next hole (i.e., copy_counts_ == 0) in the front
+    // Advance to next hole in the front
     while (copy_to < copy_from && copy_counts_[copy_to] > 0) ++copy_to;
 
-    // Find a model with at least 1 copy (or don't-care) at the end
+    // Find a model with at least 1 copy at the end
     while (copy_to < copy_from && copy_counts_[copy_from] == 0) --copy_from;
 
     if (copy_to < copy_from) {
       population_[copy_to].copyStateFrom(population_[copy_from]);
       energies_[copy_to] = energies_[copy_from];
       copy_counts_[copy_to] = 1;
-      --copy_counts_[copy_from];  // optional but logical
+      --copy_counts_[copy_from];
       ++copy_to;
       --copy_from;
     }
