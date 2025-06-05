@@ -85,15 +85,16 @@ template <typename ModelType>
 Population<ModelType>::Population(int pop_size, const gsl_rng_type* T,
                                   const SharedModelData<ModelType>& shared_data)
     : beta_(0.0),
-      pop_size_(pop_size),
+      pop_size_(0),
       nom_pop_size_(pop_size),
       shared_data_(shared_data),
       r_(gsl_rng_alloc(T)) {
   max_pop_size_ =
       static_cast<int>(nom_pop_size_ + 10 * std::sqrt(nom_pop_size_));
-  resizePopulationStorage(pop_size);
+  // population_.reserve(pop_size);
+  resizePopulationStorage(nom_pop_size_);
   for (int i = 0; i < pop_size_; ++i) {
-    population_[i].initializeState(r_, shared_data);
+    population_[i].initializeState(r_);
     population_[i].setFamily(i);
     population_[i].setParent(i);
   }
@@ -178,23 +179,34 @@ template <typename ModelType>
 void Population<ModelType>::resizePopulationStorage(int new_size) {
   if (new_size > max_pop_size_) {
     throw std::runtime_error("Exceeded maximum allowed population size.");
-  } else if (new_size > static_cast<int>(population_.capacity())) {
-    int reserve_size = static_cast<int>(
-        new_size + 5 * std::sqrt(static_cast<double>(new_size)));
-    population_.reserve(reserve_size);
-    energies_.reserve(reserve_size);
-    weights_.reserve(reserve_size);
-    copy_counts_.reserve(reserve_size);
+  } 
+
+  int reserve_size = new_size;
+  if (new_size > static_cast<int>(population_.capacity())) {
+    reserve_size = static_cast<int>(new_size + 5 * std::sqrt(static_cast<double>(new_size)));
   }
-  population_.resize(new_size);
-  energies_.resize(new_size);
-  weights_.resize(new_size);
-  copy_counts_.resize(new_size);
-  for (int i = pop_size_; i < new_size; ++i) {
-    energies_[i] = 0.0;
-    weights_[i] = 0.0;
-    copy_counts_[i] = 0;
+
+  population_.reserve(reserve_size);
+  energies_.reserve(reserve_size);
+  weights_.reserve(reserve_size);
+  copy_counts_.reserve(reserve_size);
+
+  energies_.resize(new_size, 0.0);
+  weights_.resize(new_size, 0.0);
+  copy_counts_.resize(new_size, 0);
+
+  // This loop is not optimal but is just here to make a working version of pamc.
+  // This whole section will be replaced once manual memory management is set up.
+  if (new_size > pop_size_) {
+    for (int i = pop_size_; i < new_size; ++i) {
+      population_.emplace_back(shared_data_);
+    }
+  } else if (new_size < pop_size_) {
+    for (int i = 0; i < pop_size_ - new_size; ++i) {
+      population_.pop_back();
+    }
   }
+
   pop_size_ = new_size;
 }
 
