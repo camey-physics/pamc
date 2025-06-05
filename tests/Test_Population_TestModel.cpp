@@ -77,7 +77,6 @@ TEST_F(PopulationTestModelTest, ResampleWithMultipleEnergiesCalculateTau) {
   pop_size = 5;
   std::vector<int> n(pop_size, 0);
   int num_trials = 20000;
-  int avg_pop_size = 0;
 
   // Reset the population for each trial, then resample and measure number of copies (n)
   for (int trial = 0; trial < num_trials; ++trial) {
@@ -86,7 +85,6 @@ TEST_F(PopulationTestModelTest, ResampleWithMultipleEnergiesCalculateTau) {
     std::vector<TestModel>& models = pop->getModels();
     for (int i = 0; i < pop_size; ++i) {
       models[i].setState(1 + 0.1 *i);
-      models[i].setFamily(i);
     }
     pop->resample(1, r_local);
     models = pop->getModels();
