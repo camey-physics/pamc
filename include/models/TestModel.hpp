@@ -9,9 +9,10 @@
 
 class TestModel {
  public:
+  TestModel(const SharedModelData<TestModel>&) {}
   enum class UpdateMethod { FAKE_LOW, FAKE_MID, FAKE_HIGH };
 
-  void initializeState(gsl_rng* r, const SharedModelData<TestModel>&) {
+  void initializeState(gsl_rng* r) {
     state_initialized = true;
     energy_ = gsl_rng_uniform(r);  // [0,1)
   }
@@ -49,18 +50,28 @@ class TestModel {
     updates_called_ = other.updates_called_;
     state_initialized = other.state_initialized;
     family_ = other.family_;
+    parent_ = other.parent_;
   }
 
   void setState(double energy) { energy_ = energy; }
-  void setFamily(int family) { family_ = family; }
+  void setFamily(int family) {
+    if (family_ != -1) {
+      throw std::logic_error("family_ already set");
+    }
+    family_ = family;
+  }
+  void setParent(int parent) { parent_ = parent; }
+
   int getFamily() const { return family_; }
+  int getParent() const { return parent_; }
 
   bool state_initialized = false;
   int updates_called_ = 0;
 
  private:
   double energy_ = 0.0;
-  int family_ = 0;
+  int family_ = -1;
+  int parent_ = -1;
 };
 
 #endif  // TEST_MODEL_HPP
