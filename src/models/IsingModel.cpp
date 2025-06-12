@@ -109,11 +109,6 @@ void IsingModel::updateSweep(int num_sweeps, double beta, gsl_rng* r,
   }
 }
 
-std::vector<int> IsingModel::getState() {
-  std::vector<int> state(spins_, spins_ + num_spins_);
-  return state;
-}
-
 void IsingModel::setSpin(int i, int val) {
   if (val != 1 && val != -1) {
     throw std::invalid_argument("Spin value must be +1 or -1");

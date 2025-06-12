@@ -34,7 +34,7 @@ class IsingModel : public Model {
   void updateSweep(int num_sweeps, double beta, gsl_rng* r, UpdateMethod method,
                    bool sequential = false);
 
-  std::vector<int> getState();
+  const std::vector<int> getState() const { return std::vector<int>(spins_, spins_ + num_spins_); }
 
   // Families can only be set once and is inherited via copyStateFrom
   void setFamily(int family) {
