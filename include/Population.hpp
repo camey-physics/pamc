@@ -24,7 +24,7 @@ template <typename ModelType>
 class Population {
  public:
   Population(int pop_size, const gsl_rng_type* T,
-             const SharedModelData<ModelType>& shared_data);
+             const SharedModelData<ModelType>& shared_data, unsigned long int seed = 42);
   ~Population();
   template <typename... Args>
   void equilibrate(double beta, int num_sweeps,
@@ -66,6 +66,7 @@ class Population {
   const SharedModelData<ModelType>& shared_data_;
 
   gsl_rng* r_ = nullptr;
+  unsigned long int seed_ = 42;
 
   // Helper functions
   void resizePopulationStorage(int new_size);
@@ -83,16 +84,18 @@ class Population {
 
 template <typename ModelType>
 Population<ModelType>::Population(int pop_size, const gsl_rng_type* T,
-                                  const SharedModelData<ModelType>& shared_data)
+                                  const SharedModelData<ModelType>& shared_data, unsigned long int seed)
     : beta_(0.0),
       pop_size_(0),
       nom_pop_size_(pop_size),
       shared_data_(shared_data),
-      r_(gsl_rng_alloc(T)) {
+      r_(gsl_rng_alloc(T)),
+      seed_(seed) {
   max_pop_size_ =
       static_cast<int>(nom_pop_size_ + 10 * std::sqrt(nom_pop_size_));
   // population_.reserve(pop_size);
   resizePopulationStorage(nom_pop_size_);
+  gsl_rng_set(r_, seed);
   for (int i = 0; i < pop_size_; ++i) {
     population_[i].initializeState(r_);
     population_[i].setFamily(i);
