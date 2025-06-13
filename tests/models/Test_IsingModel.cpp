@@ -123,19 +123,19 @@ TEST(IsingModelTest, MeasureEnergy) {
 
   // Measure energy of all spins up configuration
   IsingModel model(data);
-  EXPECT_NEAR(model.measureEnergy(), -3.0, 1e-10);
+  EXPECT_NEAR(model.measureEnergy(), -3.0 *num_spins, 1e-10);
   // Measure energy with one spin down
   int ind = index3D(1, 0, 0, L);
   model.setSpin(ind, -1);
-  EXPECT_NEAR(model.measureEnergy(), -3.0 + 12.0 / num_spins, 1e-10);
+  EXPECT_NEAR(model.measureEnergy(), -3.0 *num_spins + 12.0, 1e-10);
   // Measure energy with neighboring spin down
   ind = index3D(0, 0, 0, L);
   model.setSpin(ind, -1);
-  EXPECT_NEAR(model.measureEnergy(), -3.0 + 20.0 / num_spins, 1e-10);
+  EXPECT_NEAR(model.measureEnergy(), -3.0 *num_spins + 20.0, 1e-10);
   // Measure energy with second neighboring spin down
   ind = index3D(0, L - 1, 0, L);
   model.setSpin(ind, -1);
-  EXPECT_NEAR(model.measureEnergy(), -3.0 + 28.0 / num_spins, 1e-10);
+  EXPECT_NEAR(model.measureEnergy(), -3.0 *num_spins + 28.0, 1e-10);
 }
 
 // Check that the metropolis algorithm obtains expected high temperature results
@@ -165,8 +165,8 @@ TEST(IsingModelTest, MetropolisSweep) {
     avg_energy += model.measureEnergy();
     avg_mag += model.measureMagnetization();
   }
-  avg_energy /= num_samples;
-  avg_mag /= num_samples;
+  avg_energy /= num_samples *num_spins;
+  avg_mag /= num_samples *num_spins;
 
   EXPECT_NEAR(avg_energy, -3 * J * tanh(beta * J), 5e-2);
   EXPECT_NEAR(avg_mag, 0.0, 5e-2);
@@ -201,8 +201,8 @@ TEST(IsingModelTest, HeatBathSweep) {
     avg_energy += model.measureEnergy();
     avg_mag += model.measureMagnetization();
   }
-  avg_energy /= num_samples;
-  avg_mag /= num_samples;
+  avg_energy /= num_samples *num_spins;
+  avg_mag /= num_samples *num_spins;
 
   EXPECT_NEAR(avg_energy, -3 * J * tanh(beta * J), 5e-2);
   EXPECT_NEAR(avg_mag, 0.0, 5e-2);
@@ -235,8 +235,8 @@ TEST(IsingModelTest, WolffSweep) {
     avg_energy += model.measureEnergy();
     avg_mag += abs(model.measureMagnetization());
   }
-  avg_energy /= num_samples;
-  avg_mag /= num_samples;
+  avg_energy /= num_samples *num_spins;
+  avg_mag /= num_samples *num_spins;
 
   EXPECT_NEAR(avg_energy, -3, 5e-2);
   EXPECT_NEAR(avg_mag, 1.0, 5e-2);

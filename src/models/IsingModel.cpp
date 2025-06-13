@@ -52,7 +52,7 @@ double IsingModel::measureEnergy() const {
       energy -= spins_[i] * spins_[j] * bond_table_[i * num_neighbors_ + n];
     }
   }
-  return energy / num_spins_;
+  return energy;
 }
 
 double IsingModel::measureMagnetization() const {
@@ -60,7 +60,7 @@ double IsingModel::measureMagnetization() const {
   for (int i = 0; i < num_spins_; ++i) {
     mag += spins_[i];
   }
-  return static_cast<double>(mag) / num_spins_;
+  return static_cast<double>(mag);
 }
 
 void IsingModel::updateSweep(int num_sweeps, double beta, gsl_rng* r,
