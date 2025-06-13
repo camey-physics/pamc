@@ -28,7 +28,7 @@ class PopulationTestModelTest : public ::testing::Test {
 };
 
 TEST_F(PopulationTestModelTest, EquilibrateWithFakeMidYieldsEnergyInExpectedRange) {
-  pop->equilibrate(1.0, 3, TestModel::UpdateMethod::FAKE_MID, rng_);
+  pop->equilibrate(3, 1.0, TestModel::UpdateMethod::FAKE_MID, false, rng_);
 
   for (int i = 0; i < pop_size; ++i) {
     double e = pop->getState(i);
