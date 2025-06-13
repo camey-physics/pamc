@@ -26,10 +26,8 @@ class Population {
   Population(int pop_size, const gsl_rng_type* T,
              const SharedModelData<ModelType>& shared_data, unsigned long int seed = 42);
   ~Population();
-  template <typename... Args>
-  void equilibrate(double beta, int num_sweeps,
-                   typename ModelType::UpdateMethod method,
-                   Args&&... extra_args);
+  void equilibrate(int num_sweeps, double beta, typename ModelType::UpdateMethod method, bool sequential);
+  void equilibrate(int num_sweeps, double beta, typename ModelType::UpdateMethod method, bool sequential, gsl_rng* r_override);
   void resample(double new_beta, gsl_rng* r_override = nullptr);
   // Keep beta schedule simple for now.
   double suggestNextBeta() { return beta_ + 0.05; }
@@ -111,14 +109,21 @@ Population<ModelType>::~Population() {
 // Use a variadic template in order to pass additional arguments to the default
 // arguments defined in Model.hpp
 template <typename ModelType>
-template <typename... Args>
-void Population<ModelType>::equilibrate(double beta, int num_sweeps,
+void Population<ModelType>::equilibrate(int num_sweeps, double beta, 
                                         typename ModelType::UpdateMethod method,
-                                        Args&&... extra_args) {
+                                        bool sequential) {
   beta_ = beta;
-  for (int i = 0; i < pop_size_; ++i) {
-    population_[i].updateSweep(num_sweeps, method, beta,
-                               std::forward<Args>(extra_args)...);
+  for (int i = 0; i < pop_size_; ++i) { 
+    population_[i].updateSweep(num_sweeps, beta, r_, method, sequential);
+  }
+  energies_current_ = false;
+}
+
+template <typename ModelType>
+void Population<ModelType>::equilibrate(int num_sweeps, double beta, typename ModelType::UpdateMethod method, bool sequential, gsl_rng* r_override) {
+  beta_ = beta;
+  for (int i = 0; i < pop_size_; ++i) { 
+    population_[i].updateSweep(num_sweeps, beta, r_override, method, sequential);
   }
   energies_current_ = false;
 }

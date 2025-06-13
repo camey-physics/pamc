@@ -17,7 +17,9 @@ class TestModel {
     energy_ = gsl_rng_uniform(r);  // [0,1)
   }
 
-  void updateSweep(int num_sweeps, UpdateMethod method, double /*beta*/, gsl_rng* r) {
+  // void updateSweep(int num_sweeps, UpdateMethod method, double /*beta*/, gsl_rng* r) {
+  void updateSweep(int num_sweeps, double /*beta*/, gsl_rng* r,
+                             UpdateMethod method, bool /*sequential*/) {
     for (int i = 0; i < num_sweeps; ++i) {
       updates_called_ += 1;
     }
