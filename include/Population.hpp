@@ -30,7 +30,7 @@ class Population {
   void equilibrate(int num_sweeps, double beta, typename ModelType::UpdateMethod method, bool sequential, gsl_rng* r_override);
   void resample(double new_beta, gsl_rng* r_override = nullptr);
   // Keep beta schedule simple for now.
-  double suggestNextBeta() { return beta_ + 0.05; }
+  double suggestNextBeta(double beta, double epsilon);
   double measureEnergy(bool force = false);
 
   // Not enforced to be in derived models via Model.hpp, but required for
@@ -60,6 +60,8 @@ class Population {
   std::vector<double> energies_;
   std::vector<double> weights_;
   std::vector<int> copy_counts_;
+  double avg_energy_ = 0.0;
+  double var_energy_ = 0.0;
   bool energies_current_ = false;
   const SharedModelData<ModelType>& shared_data_;
 
@@ -171,16 +173,37 @@ void Population<ModelType>::resample(double new_beta, gsl_rng* r_override) {
 }
 
 template <typename ModelType>
+double Population<ModelType>::suggestNextBeta(double beta, double epsilon) {
+  measureEnergy();
+  double sigma_E = sqrt(var_energy_);
+  double delta_beta = sqrt(2 *epsilon) /sigma_E;
+  return beta + delta_beta;
+}
+
+template <typename ModelType>
 double Population<ModelType>::measureEnergy(bool force) {
   if (!energies_current_ || force) {
+    double total_energy = 0.0;
+    double total_energy_sq = 0.0;
+
     for (int i = 0; i < pop_size_; ++i) {
       energies_[i] = population_[i].measureEnergy();
+      total_energy += energies_[i];
+      total_energy_sq += energies_[i] * energies_[i];
     }
+
+    double mean_energy = total_energy /pop_size_;
+    double mean_energy_sq = total_energy_sq /pop_size_;
+    var_energy_ = mean_energy_sq - mean_energy *mean_energy;
+    avg_energy_ = mean_energy;
+
     energies_current_ = true;
+
+    return mean_energy;
   }
-  double total_energy =
-      std::accumulate(energies_.begin(), energies_.end(), 0.0);
-  return total_energy / pop_size_;
+
+  // double total_energy = std::accumulate(energies_.begin(), energies_.end(), 0.0);
+  return avg_energy_;
 }
 
 template <typename ModelType>
