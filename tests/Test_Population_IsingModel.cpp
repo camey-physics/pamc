@@ -24,7 +24,7 @@ class PopulationIsingModelTest : public ::testing::Test {
     rng_ = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set(rng_, 56);
 
-    pop_size = 1000;
+    pop_size = 10;
     population = std::make_unique<Population<IsingModel>>(
         pop_size, gsl_rng_mt19937, *shared_data, 6416);
   }
@@ -62,7 +62,7 @@ class LargePopulationIsingModelTest : public ::testing::Test {
     rng_ = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set(rng_, 56);
 
-    pop_size = 10;
+    pop_size = 1000;
     population = std::make_unique<Population<IsingModel>>(
         pop_size, gsl_rng_mt19937, *shared_data, 6416);
   }
@@ -100,7 +100,7 @@ TEST_F(PopulationIsingModelTest, GetState) {
 // Test that the initial configuration (spins randomly oriented) has an energy within two
 // standard deviations that of the expected value of E = 0.
 TEST_F(PopulationIsingModelTest, MeasureInitialEnergy) {
-  EXPECT_NEAR(population->measureEnergy(), 0.0, sqrt(3.0 /num_spins));
+  EXPECT_NEAR(population->measureEnergy() /num_spins, 0.0, sqrt(3.0 /num_spins));
 }
 
 TEST_F(PopulationIsingModelTest, RunEquilibrationSweepAtBetaZero) {
@@ -116,15 +116,15 @@ TEST_F(PopulationIsingModelTest, RunEquilibrationSweepAtBetaZero) {
     EXPECT_NE(initialState[i], population->getState(i));
   }
   // The energy per spin should still be close to zero
-  EXPECT_NEAR(population->measureEnergy(), 0.0, sqrt(3.0 /num_spins));
+  EXPECT_NEAR(population->measureEnergy() /num_spins, 0.0, sqrt(3.0 /num_spins));
 }
 
 // Test annealing with metropolis and heat bath for large beta.
 TEST_F(LargePopulationIsingModelTest, AnnealWithMetropolisToLowBeta) {
   double beta = 0.05;
   while (beta <= 0.15) {
-    population->equilibrate(200, beta, IsingModel::UpdateMethod::metropolis, true);
-    EXPECT_NEAR(population->measureEnergy(), -3 * J * tanh(beta * J), 5e-2);
+    population->equilibrate(20, beta, IsingModel::UpdateMethod::metropolis, true);
+    EXPECT_NEAR(population->measureEnergy() /num_spins, -3 * J * tanh(beta * J), 5e-2);
     beta += 0.05;
     population->resample(beta);
   }
@@ -133,15 +133,33 @@ TEST_F(LargePopulationIsingModelTest, AnnealWithMetropolisToLowBeta) {
 TEST_F(LargePopulationIsingModelTest, AnnealWithHeatBathToLowBeta) {
   double beta = 0.05;
   while (beta <= 0.15) {
-    population->equilibrate(200, beta, IsingModel::UpdateMethod::heat_bath, false);
-    EXPECT_NEAR(population->measureEnergy(), -3 * J * tanh(beta * J), 5e-2);
+    population->equilibrate(20, beta, IsingModel::UpdateMethod::heat_bath, false);
+    EXPECT_NEAR(population->measureEnergy() /num_spins, -3 * J * tanh(beta * J), 5e-2);
     beta += 0.05;
     population->resample(beta);
   }
 }
 
-TEST_F(LargePopulationIsingModelTest, EquilibrateWithWolffAtHighBeta) {
+TEST_F(PopulationIsingModelTest, EquilibrateWithWolffAtHighBeta) {
   double beta = 10;
-  population->equilibrate(100, beta, IsingModel::UpdateMethod::wolff, false);
-  EXPECT_NEAR(population->measureEnergy(), -3, 5e-2);
+  population->equilibrate(20, beta, IsingModel::UpdateMethod::wolff, false);
+  EXPECT_NEAR(population->measureEnergy() /num_spins, -3, 5e-2);
+}
+
+TEST_F(LargePopulationIsingModelTest, AnnealWithBetaScheduler) {
+  double beta = 0.0;
+  while (beta < 5) {
+    if (beta < 0.22) {
+      population->equilibrate(10, beta, IsingModel::UpdateMethod::metropolis, true);
+    }
+    else {
+      population->equilibrate(2, beta, IsingModel::UpdateMethod::wolff, false);
+    }
+    beta = population->suggestNextBeta(beta, 0.1);
+    if (beta > 5) {
+      beta = 5;
+    }
+    population->resample(beta);
+  }
+  EXPECT_NEAR(population->measureEnergy() /num_spins, -3, 5e-2);
 }
