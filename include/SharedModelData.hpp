@@ -5,6 +5,11 @@
 template <typename ModelT>
 struct SharedModelData;
 
+template <>
+struct SharedModelData<class TestModel> {
+
+};
+
 // Specialization for IsingModel
 // The bond and neighbor tables are specified externally. The only constraint is
 // that all spins must have the same number of neighbors.

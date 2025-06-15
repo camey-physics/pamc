@@ -20,11 +20,11 @@ class IsingModel : public Model {
 
   // IsingModel specific enumerated classes
   enum class UpdateMethod { metropolis, heat_bath, wolff };
-  enum class Observables { energy, magnetization };
+  enum class Observable { energy, magnetization };
 
   // IsingModel observable methods
-  double calcEnergy() const override;
-  double calcMagnetization() const;
+  double measureEnergy() const override;
+  double measureMagnetization() const;
 
   // Monte Carlo sweep methods.
   // By default uses metropolis updates on randomly selected spins
@@ -34,9 +34,23 @@ class IsingModel : public Model {
   void updateSweep(int num_sweeps, double beta, gsl_rng* r, UpdateMethod method,
                    bool sequential = false);
 
+  const std::vector<int> getState() const { return std::vector<int>(spins_, spins_ + num_spins_); }
+
+  // Families can only be set once and is inherited via copyStateFrom
+  void setFamily(int family) {
+    if (family_ != -1) {
+      throw std::logic_error("family_ already set");
+    }
+    family_ = family;
+  }
+  void setParent(int parent) { parent_ = parent; }
+
+  int getFamily() const { return family_; }
+  int getParent() const { return parent_; }
+
   // Helper methods for unit testing IsingModel class
   void setSpin(int i, int val);
-  int8_t getSpin(int i) const;
+  int getSpin(int i) const;
 
  private:
   // Shared model data, immutable
@@ -45,9 +59,11 @@ class IsingModel : public Model {
   const int system_size_;
   const int* neighbor_table_;
   const double* bond_table_;
+  int family_ = -1;
+  int parent_ = -1;
 
   // Owned data
-  int8_t* spins_;
+  int* spins_;
 
   // Monte Carlo update methods
   void metropolis(gsl_rng* r, double beta, int i);

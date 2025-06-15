@@ -14,7 +14,7 @@ IsingModel::IsingModel(const SharedModelData<IsingModel>& shared_data)
       bond_table_(shared_data.bond_table) {
   assert(num_neighbors_ % 2 == 0 &&
          "Neighbor table must use even pairing (+/- directions)");
-  spins_ = new int8_t[num_spins_];
+  spins_ = new int[num_spins_];
   for (int i = 0; i < num_spins_; ++i) {
     spins_[i] = 1;
   }
@@ -37,10 +37,12 @@ void IsingModel::copyStateFrom(const Model& other) {
          "Number of spins must match!");
   for (int i = 0; i < num_spins_; ++i) {
     this->spins_[i] = isingOther.spins_[i];
+    this->family_ = isingOther.family_;
+    this->parent_ = isingOther.parent_;
   }
 }
 
-double IsingModel::calcEnergy() const {
+double IsingModel::measureEnergy() const {
   double energy = 0.0;
   for (int i = 0; i < num_spins_; ++i) {
     // Skip every second neighbor to avoid double-counting bonds.
@@ -50,15 +52,15 @@ double IsingModel::calcEnergy() const {
       energy -= spins_[i] * spins_[j] * bond_table_[i * num_neighbors_ + n];
     }
   }
-  return energy / num_spins_;
+  return energy;
 }
 
-double IsingModel::calcMagnetization() const {
+double IsingModel::measureMagnetization() const {
   int mag = 0;
   for (int i = 0; i < num_spins_; ++i) {
     mag += spins_[i];
   }
-  return static_cast<double>(mag) / num_spins_;
+  return static_cast<double>(mag);
 }
 
 void IsingModel::updateSweep(int num_sweeps, double beta, gsl_rng* r,
@@ -114,7 +116,7 @@ void IsingModel::setSpin(int i, int val) {
   spins_[i] = val;
 }
 
-int8_t IsingModel::getSpin(int i) const {
+int IsingModel::getSpin(int i) const {
   if (i < 0 || i >= num_spins_) {
     throw std::out_of_range("Index out of range");
   }

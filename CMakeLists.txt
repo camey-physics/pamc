@@ -33,3 +33,8 @@ foreach(test_src ${TEST_FILES})
   target_link_libraries(${test_name} PRIVATE GTest::gtest_main GSL::gsl)
   gtest_discover_tests(${test_name})
 endforeach()
+
+# Build examples
+add_executable(run_ising examples/run_ising.cpp ${MODEL_SOURCES})
+target_include_directories(run_ising PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(run_ising PRIVATE GSL::gsl)
