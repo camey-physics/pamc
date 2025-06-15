@@ -16,6 +16,7 @@
 #include <numeric>
 #include <vector>
 #include <iostream>
+#include <cassert>
 
 #include "Model.hpp"
 #include "SharedModelData.hpp"
@@ -168,8 +169,7 @@ void Population<ModelType>::resample(double new_beta, gsl_rng* r_override) {
   }
   pop_size_ = new_pop_size;
 
-  int check_sum = std::accumulate(copy_counts_.begin(), copy_counts_.end(), 0);
-  assert(check_sum == new_pop_size);
+  assert(std::accumulate(copy_counts_.begin(), copy_counts_.end(), 0) == new_pop_size);
 }
 
 template <typename ModelType>
