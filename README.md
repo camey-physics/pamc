@@ -1,35 +1,78 @@
 # Population Annealing Monte Carlo (PAMC)
 
-⚠️ **Project Status**: This project is under active development. Core structure is in place, but key functionality is still being implemented.
+Flexible Population Annealing Monte Carlo (PAMC) codebase for general spin models and optimization problems. Currently supports fully functioning 3D Ising simulations, with planned extensions to spin glasses, QUBO optimization, and high-performance computing.
 
-This project is a clean, modular C++ implementation of the Population Annealing Monte Carlo (PAMC) algorithm, with an initial focus on spin glass systems in the canonical ensemble. It is designed to be extensible, testable, and performant, with shared disorder structures, parallelism, and long-term flexibility for scientific and industrial applications.
+---
 
-## Project Goals
+## Project Status
 
-- Provide a flexible simulation framework for population annealing
-- Support clean separation of per-replica state and shared model data
-- Apply modern C++ techniques for safety, clarity, and performance
-- Enable future extensions to distributed (MPI) or GPU backends
+This repository is under active development. Core functionality is implemented for population annealing on the 3D Ising model, with adaptive temperature schedules and verified basic observables. The code is structured for modular extension and intended for both research and pedagogical purposes.
 
-## Core Features and Roadmap
+---
 
-- [x] Core model infrastructure implemented
-- [x] IsingModel class with Metropolis, HeatBath, Wolff updates
-- [x] Unit tests and CI in place
-- [ ] `Population` class to manage replicas, annealing, and resampling
-- [ ] Resampling mechanism (multinomial to start)
-- [ ] Observable tracking with statistical error estimators
-- [ ] Temperature schedule generation (linear, geometric, constant culling fraction)
+## Core Features
+
+### Algorithm
+
+- [x] Core model infrastructure (`Model` interface)
+- [x] `IsingModel` class with `Metropolis`, `heat_bath`, and `Wolff` updates
+- [x] `Population` class for managing replicas, annealing, and resampling
+- [x] Resampling mechanism (multinomial resampling)
+- [x] Adaptive temperature schedule (`Population::suggestNextBeta()` using energy variance)
+- [x] Verified Binder cumulant crossing (3D Ising) for Population/Observable infrastructure
+- [ ] Genealogical observables (`rho_t`, `rho_s`, family size distribution)
+
+### Infrastructure & Postprocessing
+
+- [x] Unit tests (GoogleTest) and continuous integration
+- [ ] Generic observable interface (`measureObservable()`)
+- [ ] Data output and I/O framework (`DataWriter` class or equivalent)
+- [ ] Python postprocessing and analysis scripts for examples and tests
 - [ ] OpenMP-based parallel update sweeps
 
-## Code Structure (In Progress)
+---
 
-- **`include/`**: Public headers, abstract interfaces (e.g., `Model.hpp`, `Population.hpp`)
-- **`include/models/`**: Model headers (e.g., `IsingModel.hpp`)
-- **`src/`**: Core algorithm components (e.g., `Population.cpp`)
-- **`src/models/`**: Model implementations (e.g., `IsingModel.cpp`)
-- **`tests/`**: Unit tests (GoogleTest)
+## Directory Layout
 
-## License
+- `include/` — Public headers
+  - `Model.hpp` — abstract model interface
+  - `Population.hpp` — population annealing engine
+  - `SharedModelData.hpp` — shared model parameters (neighbor tables, bond tables)
+  - `models/` — model-specific headers (e.g. `IsingModel.hpp`, `TestModel.hpp`)
+- `src/` — Model implementations (e.g. `models/IsingModel.cpp`)
+- `examples/` — Standalone simulation drivers (e.g. `run_ising.cpp`)
+- `tests/` — Unit tests (GoogleTest)
 
-This project is licensed under the GNU General Public License v3.0 (GPLv3). Future versions may adopt a more permissive license to support broader adoption in academic and industrial settings.
+---
+
+## Planned Models
+
+- Fully connected and lattice-based spin glasses
+- QUBO (quadratic unconstrained binary optimization) problems
+- Flexible shared data structures for generalized coupling matrices
+
+---
+
+## Examples
+
+Example simulations can be found in `examples/`. For instance, the `run_ising.cpp` program performs adaptive annealing runs and outputs data suitable for Binder cumulant crossing analysis.
+
+---
+
+## Build Instructions
+
+CMake is used to configure and build the project.
+
+### Debug build (with address sanitizer and extra warnings):
+
+```bash
+cmake -DCMAKE_BUILD_TYPE=Debug -B build-debug
+cmake --build build-debug
+```
+
+or for the release build
+
+```bash
+cmake -DCMAKE_BUILD_TYPE=Release -B build-release
+cmake --build build-release
+```
