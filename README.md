@@ -48,7 +48,6 @@ This repository is under active development. Core functionality is implemented f
 ## Planned Models
 
 - Fully connected and lattice-based spin glasses
-- QUBO (quadratic unconstrained binary optimization) problems
 - Flexible shared data structures for generalized coupling matrices
 
 ---
