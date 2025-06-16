@@ -54,10 +54,15 @@ int main(int argc, char* argv[]) {
 
         double binder = 1.0 - M4_avg / (3.0 * M2_avg * M2_avg);
 
+        double rho_s, rho_t;
+        population.computeFamilyStatistics(rho_t, rho_s);
+
         std::cout << beta << " " 
                   << E / num_spins << " "
                   << M_avg << " "
-                  << binder << std::endl;
+                  << binder << " "
+                  << rho_t << " "
+                  << rho_s << std::endl;
         
         if (beta == beta_max) break;
         beta = population.suggestNextBeta(beta, culling_frac);
