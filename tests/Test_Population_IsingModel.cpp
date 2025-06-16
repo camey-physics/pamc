@@ -163,3 +163,21 @@ TEST_F(LargePopulationIsingModelTest, AnnealWithBetaScheduler) {
   }
   EXPECT_NEAR(population->measureEnergy() /num_spins, -3, 5e-2);
 }
+
+TEST_F(LargePopulationIsingModelTest, InitialRhotRhos) {
+  double rho_t, rho_s;
+  population->computeFamilyStatistics(rho_t, rho_s);
+  EXPECT_NEAR(rho_t, 1.0, 1e-8);
+  EXPECT_NEAR(rho_s, 1.0, 1e-8);
+  double beta = 0.0;
+  while (beta < 0.2) {
+    population->equilibrate(10, beta, IsingModel::UpdateMethod::metropolis, true);
+    beta = population->suggestNextBeta(beta, 0.1);
+    population->resample(beta);
+  }
+  double new_rho_t, new_rho_s;
+  population->computeFamilyStatistics(new_rho_t, new_rho_s);
+  EXPECT_GT(new_rho_t, rho_t);
+  EXPECT_GT(new_rho_s, rho_s);
+
+}
