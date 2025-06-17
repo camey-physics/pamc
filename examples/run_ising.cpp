@@ -34,6 +34,7 @@ int main(int argc, char* argv[]) {
 
     // Annealing loop
     double beta = beta_min;
+    int step = 0;
     while (beta <= beta_max) {
         population.equilibrate(10, beta, IsingModel::UpdateMethod::metropolis, true);
         double E = population.measureEnergy(); 
@@ -57,17 +58,18 @@ int main(int argc, char* argv[]) {
         double rho_s, rho_t;
         population.computeFamilyStatistics(rho_t, rho_s);
 
-        std::cout << beta << " " 
-                  << E / num_spins << " "
-                  << M_avg << " "
-                  << binder << " "
-                  << rho_t << " "
-                  << rho_s << std::endl;
-        
+        std::cout << step << " "   // add step counter
+        << beta << " " 
+        << E / num_spins << " "
+        << M_avg << " "
+        << binder << " "
+        << rho_t << " "
+        << rho_s << std::endl;
         if (beta == beta_max) break;
         beta = population.suggestNextBeta(beta, culling_frac);
         if (beta > beta_max) beta = beta_max;
         population.resample(beta);
+        step++;
     }
 
     return 0;
