@@ -7,6 +7,7 @@
 #include "models/IsingModel.hpp"
 #include "SharedModelData.hpp"
 #include "models/Ising3DHelpers.hpp"
+#include "Genealogy.hpp"
 
 class PopulationIsingModelTest : public ::testing::Test {
  protected:
@@ -165,19 +166,18 @@ TEST_F(LargePopulationIsingModelTest, AnnealWithBetaScheduler) {
 }
 
 TEST_F(LargePopulationIsingModelTest, InitialRhotRhos) {
-  double rho_t, rho_s;
-  population->computeFamilyStatistics(rho_t, rho_s);
-  EXPECT_NEAR(rho_t, 1.0, 1e-8);
-  EXPECT_NEAR(rho_s, 1.0, 1e-8);
+  GenealogyStatistics stats = population->computeGenealogyStatistics();
+  EXPECT_NEAR(stats.rho_t, 1.0, 1e-8);
+  EXPECT_NEAR(stats.rho_s, 1.0, 1e-8);
   double beta = 0.0;
   while (beta < 0.2) {
     population->equilibrate(10, beta, IsingModel::UpdateMethod::metropolis, true);
     beta = population->suggestNextBeta(beta, 0.1);
     population->resample(beta);
   }
-  double new_rho_t, new_rho_s;
-  population->computeFamilyStatistics(new_rho_t, new_rho_s);
-  EXPECT_GT(new_rho_t, rho_t);
-  EXPECT_GT(new_rho_s, rho_s);
+
+  GenealogyStatistics new_stats = population->computeGenealogyStatistics();
+  EXPECT_GT(new_stats.rho_t, stats.rho_t);
+  EXPECT_GT(new_stats.rho_s, stats.rho_s);
 
 }
