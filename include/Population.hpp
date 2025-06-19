@@ -20,6 +20,7 @@
 
 #include "Model.hpp"
 #include "SharedModelData.hpp"
+#include "Genealogy.hpp"
 
 template <typename ModelType>
 class Population {
@@ -34,7 +35,7 @@ class Population {
   double suggestNextBeta(double beta, double epsilon);
   double measureEnergy(bool force = false);
   // Compute rho_t and rho_s for error estimation.
-  void computeFamilyStatistics(double& rho_t, double& rho_s);
+  GenealogyStatistics computeGenealogyStatistics() const;
 
   // Not enforced to be in derived models via Model.hpp, but required for
   // Population. void measureObservable(typename ModelType::Observable);
@@ -53,12 +54,13 @@ class Population {
   // for unit testing and debugging.
   std::vector<ModelType>& getModels() { return population_; }
 
+
  private:
   double beta_ = 0.0;
   double delta_betaF_ = 0.0;
   int pop_size_ = 0;
+  const int initial_pop_size_;
   int nom_pop_size_ = 0;
-  const int initial_nom_pop_size_;
   int max_pop_size_ = 0;
   std::vector<ModelType> population_;
   std::vector<double> energies_;
@@ -91,8 +93,8 @@ Population<ModelType>::Population(int pop_size, const gsl_rng_type* T,
                                   const SharedModelData<ModelType>& shared_data, unsigned long int seed)
     : beta_(0.0),
       pop_size_(0),
+      initial_pop_size_(pop_size),
       nom_pop_size_(pop_size),
-      initial_nom_pop_size_(pop_size),
       shared_data_(shared_data),
       r_(gsl_rng_alloc(T)),
       seed_(seed) {
@@ -211,30 +213,35 @@ double Population<ModelType>::measureEnergy(bool force) {
 }
 
 template <typename ModelType>
-void Population<ModelType>::computeFamilyStatistics(double& rho_t, double& rho_s) {
-    std::vector<int> family_sizes(nom_pop_size_, 0);
+GenealogyStatistics Population<ModelType>::computeGenealogyStatistics() const {
+    GenealogyStatistics stats(initial_pop_size_);
+
+    std::vector<int> family_sizes(initial_pop_size_, 0);
 
     for (int i = 0; i < pop_size_; ++i) {
         int family_id = population_[i].getFamily();
         family_sizes[family_id]++;
     }
 
-    double sum_sq = 0.0;
+    int sum_sq = 0;
     double sum_entropy = 0.0;
     double norm = static_cast<double>(nom_pop_size_);
 
     for (int count : family_sizes) {
         if (count > 0) {
             double n_i = static_cast<double>(count) / norm;
-            sum_sq += static_cast<double>(count) * count;
+            sum_sq += count *count;
             sum_entropy -= n_i * std::log(n_i);
+            stats.num_unique_families++;
+            stats.max_family_size = std::max(stats.max_family_size, count);
         }
     }
 
-    rho_t = sum_sq / (norm);
-    rho_s = norm /std::exp(sum_entropy);
-}
+    stats.rho_t = static_cast<double>(sum_sq) / (norm);
+    stats.rho_s = norm /std::exp(sum_entropy);
 
+    return stats;
+}
 
 template <typename ModelType>
 void Population<ModelType>::resizePopulationStorage(int new_size) {
