@@ -10,8 +10,8 @@
 #include "Genealogy.hpp"
 
 int main(int argc, char* argv[]) {
-    if (argc != 5) {
-        std::cerr << "Usage: " << argv[0] << " <L> <pop_size> <culling_frac> <beta_max>" << std::endl;
+    if (argc < 5 || argc > 6) {
+        std::cerr << "Usage: " << argv[0] << " <L> <pop_size> <culling_frac> <beta_max> [seed]" << std::endl;
         return 1;
     }
 
@@ -22,6 +22,11 @@ int main(int argc, char* argv[]) {
     double beta_min = 0.0;
     double beta_max = std::atof(argv[4]);
 
+    unsigned long int seed = 42; // default seed
+    if (argc == 6) {
+        seed = static_cast<unsigned long int>(std::stoul(argv[5]));
+    }
+
     // Prepare shared data
     int num_spins = L * L * L;
     int num_neighbors = 6;
@@ -31,7 +36,7 @@ int main(int argc, char* argv[]) {
     SharedModelData<IsingModel> shared_data(L, num_spins, num_neighbors, neighbor_table.data(), bond_table.data());
 
     // Create population
-    Population<IsingModel> population(pop_size, gsl_rng_mt19937, shared_data);
+    Population<IsingModel> population(pop_size, gsl_rng_mt19937, shared_data, seed);
 
     // Annealing loop
     double beta = beta_min;
