@@ -18,6 +18,8 @@
 #include <iostream>
 #include <cassert>
 #include <algorithm>
+#include <limits>
+#include <unordered_set>
 
 #include "Model.hpp"
 #include "SharedModelData.hpp"
@@ -36,7 +38,7 @@ class Population {
   double suggestNextBeta(double beta, double epsilon);
   double measureEnergy(bool force = false);
   // Compute rho_t and rho_s for error estimation.
-  GenealogyStatistics computeGenealogyStatistics() const;
+  GenealogyStatistics computeGenealogyStatistics();
 
   // Not enforced to be in derived models via Model.hpp, but required for
   // Population. void measureObservable(typename ModelType::Observable);
@@ -72,6 +74,7 @@ class Population {
   std::vector<int> copy_counts_;
   double avg_energy_ = 0.0;
   double var_energy_ = 0.0;
+  double min_energy_ = std::numeric_limits<double>::max();
   bool energies_current_ = false;
   const SharedModelData<ModelType>& shared_data_;
 
@@ -195,17 +198,19 @@ double Population<ModelType>::measureEnergy(bool force) {
   if (!energies_current_ || force) {
     double total_energy = 0.0;
     double total_energy_sq = 0.0;
-
+    double min_energy = std::numeric_limits<double>::max();
     for (int i = 0; i < pop_size_; ++i) {
       energies_[i] = population_[i].measureEnergy();
       total_energy += energies_[i];
       total_energy_sq += energies_[i] * energies_[i];
+      min_energy = std::min(min_energy, energies_[i]);
     }
 
     double mean_energy = total_energy /pop_size_;
     double mean_energy_sq = total_energy_sq /pop_size_;
     var_energy_ = mean_energy_sq - mean_energy *mean_energy;
     avg_energy_ = mean_energy;
+    min_energy_ = min_energy;
 
     energies_current_ = true;
 
@@ -217,28 +222,34 @@ double Population<ModelType>::measureEnergy(bool force) {
 }
 
 template <typename ModelType>
-GenealogyStatistics Population<ModelType>::computeGenealogyStatistics() const {
+GenealogyStatistics Population<ModelType>::computeGenealogyStatistics() {
     GenealogyStatistics stats(initial_pop_size_);
 
     std::vector<int> family_sizes(initial_pop_size_, 0);
+    double gs_energy = getMinEnergy();
+    std::unordered_set<int> gs_family_ids;
 
     for (int i = 0; i < pop_size_; ++i) {
-        int family_id = population_[i].getFamily();
-        family_sizes[family_id]++;
+      int family_id = population_[i].getFamily();
+      family_sizes[family_id]++;
+      if (std::abs(energies_[i] - gs_energy) < std::numeric_limits<double>::epsilon()){
+        gs_family_ids.insert(family_id);
+      }
     }
+    stats.num_gs_families = gs_family_ids.size();
 
     int sum_sq = 0;
     double sum_entropy = 0.0;
     double norm = static_cast<double>(nom_pop_size_);
 
     for (int count : family_sizes) {
-        if (count > 0) {
-            double n_i = static_cast<double>(count) / norm;
-            sum_sq += count *count;
-            sum_entropy -= n_i * std::log(n_i);
-            stats.num_unique_families++;
-            stats.max_family_size = std::max(stats.max_family_size, count);
-        }
+      if (count > 0) {
+        double n_i = static_cast<double>(count) / norm;
+        sum_sq += count *count;
+        sum_entropy -= n_i * std::log(n_i);
+        stats.num_unique_families++;
+        stats.max_family_size = std::max(stats.max_family_size, count);
+      }
     }
 
     stats.rho_t = static_cast<double>(sum_sq) / (norm);
@@ -252,7 +263,7 @@ double Population<ModelType>::getMinEnergy() {
     if (!energies_current_) {
         measureEnergy();
     }
-    return *std::min_element(energies_.begin(), energies_.end());
+    return min_energy_;
 }
 
 template <typename ModelType>
@@ -260,7 +271,8 @@ auto Population<ModelType>::getMinEnergyState() {
     if (!energies_current_) {
         measureEnergy();
     }
-    int min_index = std::distance(energies_.begin(), std::min_element(energies_.begin(), energies_.end()));
+    auto it = std::find(energies_.begin(), energies_.end(), min_energy_);
+    int min_index = std::distance(energies_.begin(), it);
     return getState(min_index);
 }
 
