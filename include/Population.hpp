@@ -17,6 +17,7 @@
 #include <vector>
 #include <iostream>
 #include <cassert>
+#include <algorithm>
 
 #include "Model.hpp"
 #include "SharedModelData.hpp"
@@ -45,6 +46,9 @@ class Population {
   int getBeta() const { return beta_; }
   double getDeltaBetaF() const { return delta_betaF_; }
   int getPopSize() const { return pop_size_; }
+  double getMinEnergy();
+  auto getMinEnergyState();
+
 
   void setRngSeed(unsigned long int s) { gsl_rng_set(r_, s); }
   void setNomPopSize(int i) { nom_pop_size_ = i; }
@@ -241,6 +245,23 @@ GenealogyStatistics Population<ModelType>::computeGenealogyStatistics() const {
     stats.rho_s = norm /std::exp(sum_entropy);
 
     return stats;
+}
+
+template <typename ModelType>
+double Population<ModelType>::getMinEnergy() {
+    if (!energies_current_) {
+        measureEnergy();
+    }
+    return *std::min_element(energies_.begin(), energies_.end());
+}
+
+template <typename ModelType>
+auto Population<ModelType>::getMinEnergyState() {
+    if (!energies_current_) {
+        measureEnergy();
+    }
+    int min_index = std::distance(energies_.begin(), std::min_element(energies_.begin(), energies_.end()));
+    return getState(min_index);
 }
 
 template <typename ModelType>
