@@ -42,6 +42,7 @@ This repository is under active development. Core functionality is implemented f
 - `src/` — Model implementations (e.g. `models/IsingModel.cpp`)
 - `examples/` — Standalone simulation drivers (e.g. `run_ising.cpp`)
 - `tests/` — Unit tests (GoogleTest)
+- `validation/` — Python scripts for validating simulation output and generating analysis plots (e.g., Binder cumulant crossing)
 
 ---
 
