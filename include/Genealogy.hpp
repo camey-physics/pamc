@@ -12,6 +12,7 @@ struct GenealogyStatistics {
     double culling_frac_actual = 0.0;
     int num_unique_families = 0;
     int max_family_size = 0;
+    int num_gs_families = 0;
 };
 
 #endif
