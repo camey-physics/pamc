@@ -24,6 +24,7 @@ file(GLOB_RECURSE TEST_FILES ${CMAKE_SOURCE_DIR}/tests/*.cpp)
 set(MODEL_SOURCES
   ${CMAKE_SOURCE_DIR}/src/models/IsingModel.cpp
   ${CMAKE_SOURCE_DIR}/src/models/Ising3DHelpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/models/EAModel3DHelpers.cpp 
 )
 
 foreach(test_src ${TEST_FILES})
@@ -38,3 +39,7 @@ endforeach()
 add_executable(run_ising examples/run_ising.cpp ${MODEL_SOURCES})
 target_include_directories(run_ising PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(run_ising PRIVATE GSL::gsl)
+
+add_executable(run_3D_EA examples/run_3D_EA.cpp ${MODEL_SOURCES})
+target_include_directories(run_3D_EA PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(run_3D_EA PRIVATE GSL::gsl)
