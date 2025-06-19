@@ -7,6 +7,7 @@
 #include "models/IsingModel.hpp"
 #include "SharedModelData.hpp"
 #include "models/Ising3DHelpers.hpp"
+#include "Genealogy.hpp"
 
 int main(int argc, char* argv[]) {
     if (argc != 5) {
@@ -55,16 +56,15 @@ int main(int argc, char* argv[]) {
 
         double binder = 1.0 - M4_avg / (3.0 * M2_avg * M2_avg);
 
-        double rho_s, rho_t;
-        population.computeFamilyStatistics(rho_t, rho_s);
+        GenealogyStatistics stats = population.computeGenealogyStatistics();
 
-        std::cout << step << " "   // add step counter
+        std::cout << step << " "
         << beta << " " 
         << E / num_spins << " "
         << M_avg << " "
         << binder << " "
-        << rho_t << " "
-        << rho_s << std::endl;
+        << stats.rho_t << " "
+        << stats.rho_s << std::endl;
         if (beta == beta_max) break;
         beta = population.suggestNextBeta(beta, culling_frac);
         if (beta > beta_max) beta = beta_max;
