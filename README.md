@@ -20,7 +20,7 @@ This repository is under active development. Core functionality is implemented f
 - [x] Resampling mechanism (multinomial resampling)
 - [x] Adaptive temperature schedule (`Population::suggestNextBeta()` using energy variance)
 - [x] Verified Binder cumulant crossing (3D Ising) for Population/Observable infrastructure
-- [ ] Genealogical observables (`rho_t`, `rho_s`, family size distribution)
+- [x] Genealogical observables (`rho_t`, `rho_s`, max family size, etc)
 
 ### Infrastructure & Postprocessing
 
