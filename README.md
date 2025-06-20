@@ -1,12 +1,12 @@
 # Population Annealing Monte Carlo (PAMC)
 
-Flexible Population Annealing Monte Carlo (PAMC) codebase for general spin models and optimization problems. Currently supports fully functioning 3D Ising simulations, with planned extensions to spin glasses, QUBO optimization, and high-performance computing.
+Flexible Population Annealing Monte Carlo (PAMC) framework for general spin models and optimization problems. The code supports 3D Ising and Edwards-Anderson (EA) spin glass models, with adaptive annealing schedules and support for model-specific updates and observables. Designed for research, benchmarking, and pedagogical use, the codebase is structured for extensibility and high-performance simulation workflows.
 
 ---
 
 ## Project Status
 
-This repository is under active development. Core functionality is implemented for population annealing on the 3D Ising model, with adaptive temperature schedules and verified basic observables. The code is structured for modular extension and intended for both research and pedagogical purposes.
+Core functionality is implemented for population annealing on the 3D Ising and EA spin glass models, with adaptive temperature schedules, validated observables, and support for genealogical tracking. The code is structured for modular extension and intended for both research and pedagogical purposes.
 
 ---
 
@@ -21,6 +21,7 @@ This repository is under active development. Core functionality is implemented f
 - [x] Adaptive temperature schedule (`Population::suggestNextBeta()` using energy variance)
 - [x] Verified Binder cumulant crossing (3D Ising) for Population/Observable infrastructure
 - [x] Genealogical observables (`rho_t`, `rho_s`, max family size, etc)
+- [x] Edwards-Anderson spin glass with fully validated benchmark against known ground states
 
 ### Infrastructure & Postprocessing
 
@@ -42,14 +43,21 @@ This repository is under active development. Core functionality is implemented f
 - `src/` — Model implementations (e.g. `models/IsingModel.cpp`)
 - `examples/` — Standalone simulation drivers (e.g. `run_ising.cpp`)
 - `tests/` — Unit tests (GoogleTest)
-- `validation/` — Python scripts for validating simulation output and generating analysis plots (e.g., Binder cumulant crossing)
+- `validation/` — Python scripts for validating simulation output and generating analysis plots 
+  - `Ising_model/binder_validation.py` — Verify Binder cumulant crossover in 3D Ising model
+  - `EA_model/EA_validation.py` — Check PAMC output against known ground state for benchmark disorder realization
 
 ---
 
-## Planned Models
+## Available Models
 
-- Fully connected and lattice-based spin glasses
-- Flexible shared data structures for generalized coupling matrices
+- 3D Ising model with Metropolis, heat bath, and Wolff updates
+- 3D Edwards-Anderson spin glass model with disorder input and benchmark validation
+
+## Planned Features
+
+- Fully connected spin glasses
+- Generalized coupling matrices and hybrid optimization support
 
 ---
 
