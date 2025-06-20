@@ -1,6 +1,6 @@
 #include <gsl/gsl_rng.h>
 #include <gtest/gtest.h>
-#include <math.h>
+#include <cmath>
 
 #include <vector>
 
@@ -8,45 +8,29 @@
 #include "models/Ising3DHelpers.hpp"
 #include "models/IsingModel.hpp"
 
-IsingModel createDummyModel() {
-  int dummy_neighbors[6] = {0};
-  double dummy_bonds[6] = {1.0};
-  SharedModelData<IsingModel> d(1, 1, 6, dummy_neighbors, dummy_bonds);
-  return IsingModel(d);
-}
+class TestIsingModel : public ::testing::Test {
+ protected:
+  int L = 5;
+  int num_spins = L * L * L;
+  int num_neighbors = 6;
+  double J = 1.0;
+  std::vector<int> neighbor_table = initializeNeighborTable3D(L);
+  std::vector<double> bond_table = std::vector<double>(num_spins * num_neighbors, J);
+  SharedModelData<IsingModel> shared_data = SharedModelData<IsingModel>(
+      L, num_spins, num_neighbors, neighbor_table.data(), bond_table.data());
+};
 
-TEST(IsingModelTest, Construct) {
-  const int L = 4;
-  const int num_spins = L * L * L;
-  const int num_neighbors = 6;
+TEST_F(TestIsingModel, Construct) {
+  IsingModel model(shared_data);
 
-  // Create dummy neighbor and bond tables, fill with dummy data
-  int neighbor_table[num_spins * num_neighbors] = {0};
-  double bond_table[num_spins * num_neighbors] = {0.0};
-
-  SharedModelData<IsingModel> data(L, num_spins, num_neighbors, neighbor_table,
-                                   bond_table);
-  IsingModel model(data);
-
-  // Check default initialization of spins_
   for (int i = 0; i < num_spins; ++i) {
     EXPECT_EQ(model.getSpin(i), 1);
   }
 }
 
-TEST(IsingModelTest, CopyState) {
-  const int L = 10;
-  const int num_spins = L * L * L;
-  const int num_neighbors = 6;
-  double J = 1;
-
-  std::vector<int> neighbor_table = initializeNeighborTable3D(L);
-  std::vector<double> bond_table(num_spins * num_neighbors, J);
-
-  SharedModelData<IsingModel> data(L, num_spins, num_neighbors,
-                                   neighbor_table.data(), bond_table.data());
-  IsingModel model(data);
-  IsingModel model2(data);
+TEST_F(TestIsingModel, CopyState) {
+  IsingModel model(shared_data);
+  IsingModel model2(shared_data);
   gsl_rng* r = gsl_rng_alloc(gsl_rng_mt19937);
   gsl_rng_set(r, 42);
   model.initializeState(r);
@@ -58,18 +42,8 @@ TEST(IsingModelTest, CopyState) {
   gsl_rng_free(r);
 }
 
-TEST(IsingModelTest, GetState) {
-  const int L = 10;
-  const int num_spins = L * L * L;
-  const int num_neighbors = 6;
-  double J = 1;
-
-  std::vector<int> neighbor_table = initializeNeighborTable3D(L);
-  std::vector<double> bond_table(num_spins * num_neighbors, J);
-
-  SharedModelData<IsingModel> data(L, num_spins, num_neighbors,
-                                   neighbor_table.data(), bond_table.data());
-  IsingModel model(data);
+TEST_F(TestIsingModel, GetState) {
+  IsingModel model(shared_data);
 
   gsl_rng* r = gsl_rng_alloc(gsl_rng_mt19937);
   gsl_rng_set(r, 42);
@@ -109,20 +83,9 @@ TEST(IsingModelTest, NeighborTable) {
   }
 }
 
-TEST(IsingModelTest, MeasureEnergy) {
-  const int L = 5;
-  const int num_spins = L * L * L;
-  const int num_neighbors = 6;
-  double J = 1.0;
-
-  std::vector<int> neighbor_table = initializeNeighborTable3D(L);
-  std::vector<double> bond_table(num_spins * num_neighbors, J);
-
-  SharedModelData<IsingModel> data(L, num_spins, num_neighbors,
-                                   neighbor_table.data(), bond_table.data());
-
+TEST_F(TestIsingModel, MeasureEnergy) {
   // Measure energy of all spins up configuration
-  IsingModel model(data);
+  IsingModel model(shared_data);
   EXPECT_NEAR(model.measureEnergy(), -3.0 *num_spins, 1e-10);
   // Measure energy with one spin down
   int ind = index3D(1, 0, 0, L);
@@ -139,20 +102,11 @@ TEST(IsingModelTest, MeasureEnergy) {
 }
 
 // Check that the metropolis algorithm obtains expected high temperature results
-TEST(IsingModelTest, MetropolisSweep) {
-  const int L = 5;
-  const int num_spins = L * L * L;
-  const int num_neighbors = 6;
+TEST_F(TestIsingModel, MetropolisSweep) {
   double beta = 0.1;
   int num_samples = 100;
-  double J = 1;
 
-  std::vector<int> neighbor_table = initializeNeighborTable3D(L);
-  std::vector<double> bond_table(num_spins * num_neighbors, J);
-
-  SharedModelData<IsingModel> data(L, num_spins, num_neighbors,
-                                   neighbor_table.data(), bond_table.data());
-  IsingModel model(data);
+  IsingModel model(shared_data);
   gsl_rng* r = gsl_rng_alloc(gsl_rng_mt19937);
   gsl_rng_set(r, 42);
   model.initializeState(r);
@@ -175,20 +129,11 @@ TEST(IsingModelTest, MetropolisSweep) {
 }
 
 // Check that the heat bath algorithm obtains expected high temperature results
-TEST(IsingModelTest, HeatBathSweep) {
-  const int L = 5;
-  const int num_spins = L * L * L;
-  const int num_neighbors = 6;
+TEST_F(TestIsingModel, HeatBathSweep) {
   double beta = 0.1;
   int num_samples = 100;
-  double J = 1;
 
-  std::vector<int> neighbor_table = initializeNeighborTable3D(L);
-  std::vector<double> bond_table(num_spins * num_neighbors, J);
-
-  SharedModelData<IsingModel> data(L, num_spins, num_neighbors,
-                                   neighbor_table.data(), bond_table.data());
-  IsingModel model(data);
+  IsingModel model(shared_data);
   gsl_rng* r = gsl_rng_alloc(gsl_rng_mt19937);
   gsl_rng_set(r, 42);
   model.initializeState(r);
@@ -210,20 +155,11 @@ TEST(IsingModelTest, HeatBathSweep) {
 }
 
 // Check that the Wolff algorithm obtains expected low temperature results
-TEST(IsingModelTest, WolffSweep) {
-  const int L = 5;
-  const int num_spins = L * L * L;
-  const int num_neighbors = 6;
+TEST_F(TestIsingModel, WolffSweep) {
   double beta = 10;
   int num_samples = 100;
-  double J = 1;
 
-  std::vector<int> neighbor_table = initializeNeighborTable3D(L);
-  std::vector<double> bond_table(num_spins * num_neighbors, J);
-
-  SharedModelData<IsingModel> data(L, num_spins, num_neighbors,
-                                   neighbor_table.data(), bond_table.data());
-  IsingModel model(data);
+  IsingModel model(shared_data);
   gsl_rng* r = gsl_rng_alloc(gsl_rng_mt19937);
   gsl_rng_set(r, 42);
   model.initializeState(r);
