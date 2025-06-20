@@ -1,0 +1,8 @@
+{
+  "ground_truth": {
+    "pop_size": 50000,
+    "energy_min": -359.532178441221731,
+    "rho_t": 40.67936,
+    "num_gs_families": 1322
+  }
+}
