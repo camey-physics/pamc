@@ -28,7 +28,7 @@ Core functionality is implemented for population annealing on the 3D Ising and E
 - [x] Unit tests (GoogleTest) and continuous integration
 - [ ] Generic observable interface (`measureObservable()`)
 - [ ] Data output and I/O framework (`DataWriter` class or equivalent)
-- [ ] Python postprocessing and analysis scripts for examples and tests
+- [x] Python postprocessing and analysis scripts for examples and tests
 - [ ] OpenMP-based parallel update sweeps
 
 ---
