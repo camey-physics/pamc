@@ -12,7 +12,7 @@ pop_size = 1000
 culling_frac = 0.1
 beta_max = 0.5
 
-root = "../"
+root = "../../"
 executable = root + "build-release/run_ising"
 data_dir = root + "validation/data"
 plot_dir = root + "validation/plots"
