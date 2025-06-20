@@ -2,5 +2,5 @@
 build
 build-debug
 build-release
-validation/data
-validation/plots
+validation/Ising_model/data
+validation/Ising_model/plots
