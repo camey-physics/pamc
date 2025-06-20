@@ -14,8 +14,8 @@ beta_max = 0.5
 
 root = "../../"
 executable = root + "build-release/run_ising"
-data_dir = root + "validation/data"
-plot_dir = root + "validation/plots"
+data_dir = "./data"
+plot_dir = "./plots"
 
 os.makedirs(data_dir, exist_ok=True)
 os.makedirs(plot_dir, exist_ok=True)
