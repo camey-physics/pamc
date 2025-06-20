@@ -7,7 +7,7 @@ import os
 
 # Parameters
 Ls = [4, 6, 8]#, 10]
-num_runs = 5
+num_runs = 1
 pop_size = 1000
 culling_frac = 0.1
 beta_max = 0.5
@@ -47,12 +47,14 @@ for L in Ls:
         continue
 
     for run_idx in range(num_runs):
+        seed = np.random.randint(1e5, 1e9)
         cmd = [
             executable,
             str(L),
             str(pop_size),
             str(culling_frac),
-            str(beta_max)
+            str(beta_max),
+            str(seed)
         ]
 
         proc = subprocess.run(
