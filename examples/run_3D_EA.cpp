@@ -4,6 +4,7 @@
 #include <string>
 #include <gsl/gsl_rng.h>
 #include <iomanip>
+#include <omp.h>
 
 #include "Population.hpp"
 #include "models/IsingModel.hpp"
@@ -12,14 +13,14 @@
 #include "Genealogy.hpp"
 
 int main(int argc, char* argv[]) {
-    if (argc != 8) {
+    if (argc < 8 || argc > 9) {
         std::cerr << "Usage: " << argv[0] 
-                  << " <L> <pop_size> <culling_frac> <beta_max> <seed> <neighbor_table_path> <bond_table_path>" 
-                  << std::endl;
+                << " <L> <pop_size> <culling_frac> <beta_max> <seed> <neighbor_table_path> <bond_table_path> [num_threads]" 
+                << std::endl;
         return 1;
     }
 
-    // Parse arguments
+    // Parse required arguments
     int L = std::atoi(argv[1]);
     int pop_size = std::atoi(argv[2]);
     double culling_frac = std::atof(argv[3]);
@@ -27,6 +28,18 @@ int main(int argc, char* argv[]) {
     unsigned long int seed = static_cast<unsigned long int>(std::stoul(argv[5]));
     std::string neighbor_path = argv[6];
     std::string bond_path = argv[7];
+
+    // Parse optional num_threads
+    if (argc == 9) {
+        int num_threads = std::atoi(argv[8]);
+        if (num_threads > 0) {
+            omp_set_num_threads(num_threads);
+        } else {
+            std::cerr << "Warning: invalid num_threads specified, using default OpenMP configuration." << std::endl;
+        }
+    }
+
+std::cout << "Using " << omp_get_max_threads() << " OpenMP threads\n";
 
     int num_spins = L * L * L;
     int num_neighbors = 6;
@@ -42,7 +55,7 @@ int main(int argc, char* argv[]) {
     double beta = 0.0;
     int step = 0;
     while (beta <= beta_max) {
-        population.equilibrate(10, beta, IsingModel::UpdateMethod::metropolis, true);
+        population.equilibrate(30, beta, IsingModel::UpdateMethod::metropolis, true);
         double E = population.measureEnergy();
         double E_min = population.getMinEnergy();
         GenealogyStatistics stats = population.computeGenealogyStatistics();

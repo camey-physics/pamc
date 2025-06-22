@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <vector>
 #include <gsl/gsl_rng.h>
+#include <omp.h>
 
 #include "Population.hpp"
 #include "models/IsingModel.hpp"
@@ -10,8 +11,9 @@
 #include "Genealogy.hpp"
 
 int main(int argc, char* argv[]) {
-    if (argc != 6) {
-        std::cerr << "Usage: " << argv[0] << " <L> <pop_size> <culling_frac> <beta_max> <seed>" << std::endl;
+    if (argc < 6 || argc > 7) {
+        std::cerr << "Usage: " << argv[0]
+                << " <L> <pop_size> <culling_frac> <beta_max> <seed> [num_threads]" << std::endl;
         return 1;
     }
 
@@ -22,6 +24,16 @@ int main(int argc, char* argv[]) {
     double beta_min = 0.0;
     double beta_max = std::atof(argv[4]);
     unsigned long int seed = static_cast<unsigned long int>(std::stoul(argv[5]));
+
+    // Optional num_threads argument
+    if (argc == 7) {
+        int num_threads = std::atoi(argv[6]);
+        if (num_threads > 0) {
+            omp_set_num_threads(num_threads);
+        } else {
+            std::cerr << "Warning: invalid num_threads value. Falling back to default OpenMP configuration." << std::endl;
+        }
+    }
 
     // Prepare shared data
     int num_spins = L * L * L;
