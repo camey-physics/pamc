@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <limits>
 #include <unordered_set>
+#include <omp.h>
 
 #include "Model.hpp"
 #include "SharedModelData.hpp"
@@ -79,6 +80,7 @@ class Population {
   const SharedModelData<ModelType>& shared_data_;
 
   gsl_rng* r_ = nullptr;
+  std::vector<gsl_rng*> thread_rngs_;
   unsigned long int seed_ = 42;
 
   // Helper functions
@@ -110,6 +112,12 @@ Population<ModelType>::Population(int pop_size, const gsl_rng_type* T,
   // population_.reserve(pop_size);
   resizePopulationStorage(nom_pop_size_);
   gsl_rng_set(r_, seed);
+  int num_threads = omp_get_max_threads();
+  thread_rngs_.resize(num_threads);
+  for (int t = 0; t < num_threads; ++t) {
+      thread_rngs_[t] = gsl_rng_alloc(gsl_rng_mt19937);
+      gsl_rng_set(thread_rngs_[t], seed_ + t *1000);
+  }
   for (int i = 0; i < pop_size_; ++i) {
     population_[i].initializeState(r_);
     population_[i].setFamily(i);
@@ -120,6 +128,9 @@ Population<ModelType>::Population(int pop_size, const gsl_rng_type* T,
 template <typename ModelType>
 Population<ModelType>::~Population() {
   gsl_rng_free(r_);
+  for (auto* rng : thread_rngs_) {
+    gsl_rng_free(rng);
+  }
 }
 
 // Use a variadic template in order to pass additional arguments to the default
@@ -129,8 +140,11 @@ void Population<ModelType>::equilibrate(int num_sweeps, double beta,
                                         typename ModelType::UpdateMethod method,
                                         bool sequential) {
   beta_ = beta;
-  for (int i = 0; i < pop_size_; ++i) { 
-    population_[i].updateSweep(num_sweeps, beta, r_, method, sequential);
+  #pragma omp parallel for schedule(static)
+  for (int i = 0; i < pop_size_; ++i) {
+    int tid = omp_get_thread_num();
+    gsl_rng* rng = thread_rngs_[tid];
+    population_[i].updateSweep(num_sweeps, beta, rng, method, sequential);
   }
   energies_current_ = false;
 }
@@ -138,7 +152,7 @@ void Population<ModelType>::equilibrate(int num_sweeps, double beta,
 template <typename ModelType>
 void Population<ModelType>::equilibrate(int num_sweeps, double beta, typename ModelType::UpdateMethod method, bool sequential, gsl_rng* r_override) {
   beta_ = beta;
-  for (int i = 0; i < pop_size_; ++i) { 
+  for (int i = 0; i < pop_size_; ++i) {
     population_[i].updateSweep(num_sweeps, beta, r_override, method, sequential);
   }
   energies_current_ = false;
