@@ -3,4 +3,3 @@ build
 build-debug
 build-release
 validation/Ising_model/data
-validation/Ising_model/plots
