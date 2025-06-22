@@ -8,9 +8,10 @@ import os
 # Parameters
 Ls = [4, 6, 8]#, 10]
 num_runs = 1
-pop_size = 1000
+pop_size = 50_000
 culling_frac = 0.1
 beta_max = 0.5
+num_threads = 4
 
 root = "../../"
 executable = root + "build-release/run_ising"
@@ -54,7 +55,8 @@ for L in Ls:
             str(pop_size),
             str(culling_frac),
             str(beta_max),
-            str(seed)
+            str(seed),
+            str(num_threads)
         ]
 
         proc = subprocess.run(

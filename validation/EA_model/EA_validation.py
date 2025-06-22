@@ -7,10 +7,11 @@ import json
 
 # Input configuration
 L = 6
-pop_size = 10000
+pop_size = 50_000
 culling_frac = 0.1
 beta_max = 5.0
 seed = 94723975
+num_threads = 4
 
 root = "../../"
 instance_dir = f"EA_realizations/L{L}"
@@ -36,7 +37,8 @@ cmd = [
     str(beta_max),
     str(seed),
     neighbor_path,
-    bond_path
+    bond_path,
+    str(num_threads)
 ]
 
 print(f"Running: {' '.join(cmd)}")
