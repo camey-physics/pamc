@@ -8,6 +8,8 @@ Flexible Population Annealing Monte Carlo (PAMC) framework for general spin mode
 
 Core functionality is implemented for population annealing on the 3D Ising and EA spin glass models, with adaptive temperature schedules, validated observables, and support for genealogical tracking. The code is structured for modular extension and intended for both research and pedagogical purposes.
 
+A performance-focused refactor is underway to support custom memory pools and compact spin storage (bit arrays), targeting improved efficiency in large-scale spin glass simulations.
+
 ---
 
 ## Core Features
@@ -29,7 +31,7 @@ Core functionality is implemented for population annealing on the 3D Ising and E
 - [ ] Generic observable interface (`measureObservable()`)
 - [ ] Data output and I/O framework (`DataWriter` class or equivalent)
 - [x] Python postprocessing and analysis scripts for examples and tests
-- [ ] OpenMP-based parallel update sweeps
+- [x] OpenMP-based parallel update sweeps
 
 ---
 
