@@ -16,6 +16,7 @@ class TestIsingModelPool : public ::testing::Test {
   std::vector<double> bond_table = std::vector<double>(num_spins * num_neighbors, J);
   SharedModelData<IsingModel> shared_data = SharedModelData<IsingModel>(
       L, num_spins, num_neighbors, neighbor_table.data(), bond_table.data());
+  MemoryPool<int> pool = MemoryPool<int>(num_spins);
 };
 
 TEST_F(TestIsingModelPool, ReportsStorageRequirements) {
@@ -29,7 +30,6 @@ TEST_F(TestIsingModelPool, ReportsStorageRequirements) {
 }
 
 TEST_F(TestIsingModelPool, Construct) {
-  MemoryPool<int> pool = MemoryPool<int>(num_spins);
   IsingModel model(shared_data, pool.allocate(num_spins));
 
   ASSERT_TRUE(model.usesExternalPool());
@@ -58,7 +58,6 @@ TEST_F(TestIsingModelPool, CopyState) {
 }
 
 TEST_F(TestIsingModelPool, GetState) {
-  MemoryPool<int> pool = MemoryPool<int>(num_spins);
   IsingModel model(shared_data, pool.allocate(num_spins));
 
   gsl_rng* r = gsl_rng_alloc(gsl_rng_mt19937);
@@ -76,7 +75,6 @@ TEST_F(TestIsingModelPool, GetState) {
 
 TEST_F(TestIsingModelPool, MeasureEnergy) {
   // Measure energy of all spins up configuration
-  MemoryPool<int> pool = MemoryPool<int>(num_spins);
   IsingModel model(shared_data, pool.allocate(num_spins));
   EXPECT_NEAR(model.measureEnergy(), -3.0 *num_spins, 1e-10);
   // Measure energy with one spin down
@@ -98,7 +96,6 @@ TEST_F(TestIsingModelPool, MetropolisSweep) {
   double beta = 0.1;
   int num_samples = 100;
 
-  MemoryPool<int> pool = MemoryPool<int>(num_spins);
   IsingModel model(shared_data, pool.allocate(num_spins));
   gsl_rng* r = gsl_rng_alloc(gsl_rng_mt19937);
   gsl_rng_set(r, 42);
@@ -126,7 +123,6 @@ TEST_F(TestIsingModelPool, HeatBathSweep) {
   double beta = 0.1;
   int num_samples = 100;
 
-  MemoryPool<int> pool = MemoryPool<int>(num_spins);
   IsingModel model(shared_data, pool.allocate(num_spins));
   gsl_rng* r = gsl_rng_alloc(gsl_rng_mt19937);
   gsl_rng_set(r, 42);
@@ -153,7 +149,6 @@ TEST_F(TestIsingModelPool, WolffSweep) {
   double beta = 10;
   int num_samples = 100;
 
-  MemoryPool<int> pool = MemoryPool<int>(num_spins);
   IsingModel model(shared_data, pool.allocate(num_spins));
   gsl_rng* r = gsl_rng_alloc(gsl_rng_mt19937);
   gsl_rng_set(r, 42);
