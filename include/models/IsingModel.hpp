@@ -61,6 +61,8 @@ class IsingModel : public Model {
   void setSpin(int i, int val);
   int getSpin(int i) const;
 
+  int* getSpins_() const { return spins_; }
+
  private:
   // Shared model data, immutable
   const int num_spins_;
