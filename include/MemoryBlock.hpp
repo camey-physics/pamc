@@ -1,6 +1,8 @@
 #ifndef MEMORY_BLOCK_HPP
 #define MEMORY_BLOCK_HPP
 
+// MemoryBlock is used by models to specify memory requirements for external MemoryPool allocation.
+
 #include <cstddef>
 #include <typeindex>
 #include <typeinfo>
