@@ -9,12 +9,21 @@
 
 #include "Model.hpp"
 #include "SharedModelData.hpp"
+#include "MemoryBlock.hpp"
 
 class IsingModel : public Model {
  public:
   // IsingModel state related methods
   explicit IsingModel(const SharedModelData<IsingModel>& shared_data);
+  IsingModel(const SharedModelData<IsingModel>& shared_data, int* external_spins);
   ~IsingModel();
+
+  // Overload storageRequirements and usesExternalPool to make use of MemoryPool
+  std::vector<MemoryBlock> storageRequirements(std::size_t L) const override {
+    std::size_t num_spins = L * L * L;
+    return { MemoryBlock::forType<int>(num_spins) };
+  }
+  bool usesExternalPool() const noexcept override { return true; }
   void initializeState(gsl_rng* r) override;
   void copyStateFrom(const Model& other) override;
 
@@ -59,10 +68,9 @@ class IsingModel : public Model {
   const int system_size_;
   const int* neighbor_table_;
   const double* bond_table_;
+  bool owns_spins_ = true;
   int family_ = -1;
   int parent_ = -1;
-
-  // Owned data
   int* spins_;
 
   // Monte Carlo update methods

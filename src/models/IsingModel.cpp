@@ -20,7 +20,26 @@ IsingModel::IsingModel(const SharedModelData<IsingModel>& shared_data)
   }
 }
 
-IsingModel::~IsingModel() { delete[] spins_; }
+IsingModel::IsingModel(const SharedModelData<IsingModel>& shared_data, int* external_spins)
+    : num_spins_(shared_data.num_spins),
+      num_neighbors_(shared_data.num_neighbors),
+      system_size_(shared_data.system_size),
+      neighbor_table_(shared_data.neighbor_table),
+      bond_table_(shared_data.bond_table),
+      owns_spins_(false),
+      spins_(external_spins) {
+  assert(num_neighbors_ % 2 == 0 &&
+         "Neighbor table must use even pairing (+/- directions)");
+  for (int i = 0; i < num_spins_; ++i) {
+    spins_[i] = 1;
+  }
+}
+
+IsingModel::~IsingModel() { 
+  if (owns_spins_) {
+    delete[] spins_; 
+  }
+}
 
 void IsingModel::initializeState(gsl_rng* r) {
   for (int i = 0; i < num_spins_; ++i) {
