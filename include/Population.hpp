@@ -21,8 +21,10 @@
 #include <limits>
 #include <unordered_set>
 #include <omp.h>
+#include <optional>
 
 #include "Model.hpp"
+#include "MemoryPool.hpp"
 #include "SharedModelData.hpp"
 #include "Genealogy.hpp"
 
@@ -30,7 +32,7 @@ template <typename ModelType>
 class Population {
  public:
   Population(int pop_size, const gsl_rng_type* T,
-             const SharedModelData<ModelType>& shared_data, unsigned long int seed = 42);
+             const SharedModelData<ModelType>& shared_data, unsigned long int seed = 42, bool use_external_memory = false);
   ~Population();
   void equilibrate(int num_sweeps, double beta, typename ModelType::UpdateMethod method, bool sequential);
   void equilibrate(int num_sweeps, double beta, typename ModelType::UpdateMethod method, bool sequential, gsl_rng* r_override);
@@ -83,6 +85,14 @@ class Population {
   std::vector<gsl_rng*> thread_rngs_;
   unsigned long int seed_ = 42;
 
+  // Use a conditional to determine whether a model supports using an external memory pool.
+  // If so, create a member variable of MemoryPool<storage_type> and if not, then create
+  // A MemoryPool of a dummy storage type that is empty.
+  bool use_external_memory_ = false;
+  struct DummyStorage {};
+  using pool_type = std::conditional_t<ModelType::supports_pool, typename ModelType::storage_type, DummyStorage>;                                         // ← empty if no pool
+  std::optional<MemoryPool<pool_type>> spin_pool_;
+
   // Helper functions
   void resizePopulationStorage(int new_size);
   inline int stochastic_round(double tau, gsl_rng* r) {
@@ -99,17 +109,26 @@ class Population {
 
 template <typename ModelType>
 Population<ModelType>::Population(int pop_size, const gsl_rng_type* T,
-                                  const SharedModelData<ModelType>& shared_data, unsigned long int seed)
+                                  const SharedModelData<ModelType>& shared_data, unsigned long int seed, bool use_external_memory)
     : beta_(0.0),
       pop_size_(0),
       initial_pop_size_(pop_size),
       nom_pop_size_(pop_size),
       shared_data_(shared_data),
       r_(gsl_rng_alloc(T)),
-      seed_(seed) {
+      seed_(seed),
+      use_external_memory_(use_external_memory) {
   max_pop_size_ =
       static_cast<int>(nom_pop_size_ + 10 * std::sqrt(nom_pop_size_));
-  // population_.reserve(pop_size);
+  if (use_external_memory_ && ModelType::supports_pool) {
+      std::size_t per_rep = ModelType::elementsPerReplica(shared_data_);
+      spin_pool_.emplace(max_pop_size_ * per_rep);
+  }
+  else if (use_external_memory_ && !ModelType::supports_pool) {
+      throw std::runtime_error(
+          "Model selected for external memory does not support it.");
+  }
+
   resizePopulationStorage(nom_pop_size_);
   gsl_rng_set(r_, seed);
   int num_threads = omp_get_max_threads();
@@ -313,8 +332,19 @@ void Population<ModelType>::resizePopulationStorage(int new_size) {
   // This loop is not optimal but is just here to make a working version of pamc.
   // This whole section will be replaced once manual memory management is set up.
   if (new_size > pop_size_) {
-    for (int i = pop_size_; i < new_size; ++i) {
-      population_.emplace_back(shared_data_);
+    if constexpr (ModelType::supports_pool) {
+      if (spin_pool_) {
+          std::size_t per_rep = ModelType::elementsPerReplica(shared_data_);
+          for (int i = pop_size_; i < new_size; ++i) {
+              auto* ptr = spin_pool_->allocate(per_rep);
+              population_.emplace_back(shared_data_, ptr);
+          }
+      }
+    }
+    if (!spin_pool_) {
+      for (int i = pop_size_; i < new_size; ++i) {
+        population_.emplace_back(shared_data_);
+      }
     }
   } else if (new_size < pop_size_) {
     for (int i = 0; i < pop_size_ - new_size; ++i) {
