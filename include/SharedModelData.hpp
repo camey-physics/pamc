@@ -10,6 +10,10 @@ struct SharedModelData<class TestModel> {
 
 };
 
+// All models that want to make use of external memory must ensure that SharedModelData
+// contains data such thatthe number of elements required for the external memory 
+// allocator can be calculated in the Model::elementsPerReplica() method
+
 // Specialization for IsingModel
 // The bond and neighbor tables are specified externally. The only constraint is
 // that all spins must have the same number of neighbors.
