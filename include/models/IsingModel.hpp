@@ -9,7 +9,6 @@
 
 #include "Model.hpp"
 #include "SharedModelData.hpp"
-// #include "MemoryBlock.hpp"
 
 class IsingModel : public Model {
  public:
