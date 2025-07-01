@@ -11,6 +11,9 @@ class TestModel {
  public:
   TestModel(const SharedModelData<TestModel>&) {}
   static constexpr bool supports_pool = false;
+  using storage_type = void;
+  template <typename SharedData>
+  static std::size_t elementsPerReplica(const SharedData&) noexcept { return 0; }
 
   enum class UpdateMethod { FAKE_LOW, FAKE_MID, FAKE_HIGH };
 
