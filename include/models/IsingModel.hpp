@@ -9,7 +9,7 @@
 
 #include "Model.hpp"
 #include "SharedModelData.hpp"
-#include "MemoryBlock.hpp"
+// #include "MemoryBlock.hpp"
 
 class IsingModel : public Model {
  public:
@@ -18,17 +18,16 @@ class IsingModel : public Model {
   IsingModel(const SharedModelData<IsingModel>& shared_data, int* external_spins);
   ~IsingModel();
 
-  // Overload storageRequirements and usesExternalPool to make use of MemoryPool
-  std::vector<MemoryBlock> storageRequirements(std::size_t L) const override {
-    std::size_t num_spins = L * L * L;
-    return { MemoryBlock::forType<int>(num_spins) };
-  }
-  bool usesExternalPool() const noexcept override { return true; }
+  // Static helper functions related to external memory
+  static constexpr bool supports_pool = true;
+  using storage_type = int;
+  static std::size_t elementsPerReplica(const SharedModelData<IsingModel>& shared_data) { return shared_data.num_spins; }
+
   void initializeState(gsl_rng* r) override;
   void copyStateFrom(const Model& other) override;
 
   // IsingModel specific enumerated classes
-  enum class UpdateMethod { metropolis, heat_bath, wolff };
+  enum class UpdateMethod { metropolis, heat_bath, wolff }; 
   enum class Observable { energy, magnetization };
 
   // IsingModel observable methods
