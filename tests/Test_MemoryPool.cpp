@@ -58,5 +58,5 @@ TEST(MemoryPoolTest, ResetAllowsReuse) {
 TEST(MemoryPoolTest, OverAllocateTriggersAssert) {
   MemoryPool<int> pool(5);
   pool.allocate(5);
-  EXPECT_DEATH(pool.allocate(1), ".*");
+  EXPECT_DEBUG_DEATH(pool.allocate(1), ".*");
 }
