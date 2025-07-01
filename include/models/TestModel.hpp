@@ -10,6 +10,8 @@
 class TestModel {
  public:
   TestModel(const SharedModelData<TestModel>&) {}
+  static constexpr bool supports_pool = false;
+
   enum class UpdateMethod { FAKE_LOW, FAKE_MID, FAKE_HIGH };
 
   void initializeState(gsl_rng* r) {
