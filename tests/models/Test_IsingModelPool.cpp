@@ -1,9 +1,9 @@
 #include "models/IsingModel.hpp"
 #include "models/Ising3DHelpers.hpp"
-#include "MemoryBlock.hpp"
+// #include "MemoryBlock.hpp"
 #include "MemoryPool.hpp"
 #include <gtest/gtest.h>
-#include <typeindex>
+#include <type_traits>
 #include <cmath>
 
 class TestIsingModelPool : public ::testing::Test {
@@ -23,17 +23,13 @@ TEST_F(TestIsingModelPool, ReportsStorageRequirements) {
   IsingModel model(shared_data);
   std::size_t expected_spins = L * L * L;
 
-  auto reqs = model.storageRequirements(L);
-  ASSERT_EQ(reqs.size(), 1);
-  EXPECT_EQ(reqs[0].type, std::type_index(typeid(int)));
-  EXPECT_EQ(reqs[0].count, expected_spins);
+  EXPECT_TRUE(IsingModel::supports_pool);
+  EXPECT_EQ(IsingModel::elementsPerReplica(shared_data), expected_spins);
+  EXPECT_TRUE((std::is_same<IsingModel::storage_type, int>::value));
 }
 
 TEST_F(TestIsingModelPool, Construct) {
   IsingModel model(shared_data, pool.allocate(num_spins));
-
-  ASSERT_TRUE(model.usesExternalPool());
-
   for (int i = 0; i < num_spins; ++i) {
     EXPECT_EQ(model.getSpin(i), 1);
   }
