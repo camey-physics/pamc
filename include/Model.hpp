@@ -19,10 +19,18 @@
 // These methods are duck-typed: they are not enforced via Model.hpp,
 // but are required for Population to compile and function correctly.
 
-
 class Model {
  public:
   virtual ~Model() = default;
+
+  // Static helper functions related to external memory.
+  // By default, these are set for a model that does not support external memory.
+  // If external memory will be used then SharedData should be overridden with the 
+  // SharedModelData specialization specific to the model.
+  static constexpr bool supports_pool = false;
+  using storage_type = void;
+  template <typename SharedData>
+  static std::size_t elementsPerReplica(const SharedData&) noexcept { return 0; }
 
   // Randomizes internal state using the provided RNG.
   // This base method must be overloaded in each derived class.
