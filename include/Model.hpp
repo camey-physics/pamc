@@ -3,7 +3,7 @@
 
 #include <gsl/gsl_rng.h>
 
-#include "MemoryBlock.hpp"
+// #include "MemoryBlock.hpp"
 
 // Abstract base class for all Monte Carlo models used in PAMC.
 // Model is a polymorphic base for all models used in Population.
@@ -23,15 +23,6 @@
 class Model {
  public:
   virtual ~Model() = default;
-
-  // By default, models will not use an external memory pool.
-  virtual bool usesExternalPool() const noexcept { return false; }
-  
-  virtual std::vector<MemoryBlock> storageRequirements(std::size_t /*L*/) const 
-  {
-      throw std::runtime_error(
-          "External custom memory pool not implemented for this model");
-  }
 
   // Randomizes internal state using the provided RNG.
   // This base method must be overloaded in each derived class.
